@@ -44,6 +44,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/properties/{id}/inquiries").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/properties").hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/properties/{id}").hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/properties/{id}").hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/properties/{id}/publish",
+                                "/api/v1/properties/{id}/pause",
+                                "/api/v1/properties/{id}/images")
+                        .hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(
+                                HttpMethod.PATCH, "/api/v1/properties/{id}/images/{imageId}")
+                        .hasAnyRole("AGENCY", "ADMIN")
+                        .requestMatchers(
+                                HttpMethod.DELETE, "/api/v1/properties/{id}/images/{imageId}")
+                        .hasAnyRole("AGENCY", "ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> writeProblemDetail(

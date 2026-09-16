@@ -15,21 +15,21 @@ Actualizado: **8 sep 2026**. Contrato v1 en `main` (`back-lime`): **20 REST + `G
 | # | Estado | Método | Ruta | Auth | Notas |
 |---|--------|--------|------|------|-------|
 | 1 | Hecho | `GET` | `/properties` | Público | Solo `PUBLISHED`; filtros `city`, `province`, `type`, `operation`, `minPrice`, `maxPrice`, `minBedrooms`, `minBathrooms` |
-| 2 | Hecho | `POST` | `/properties` | JWT | Crea `DRAFT`; `owner` = usuario del token |
+| 2 | Hecho | `POST` | `/properties` | JWT · `AGENCY`/`ADMIN` | Crea `DRAFT`; `owner` = usuario del token · **403** si `USER` |
 | 3 | Hecho | `GET` | `/properties/{id}` | Mixto | Público solo `PUBLISHED`; dueño JWT ve `DRAFT`/`PAUSED` |
-| 4 | Hecho | `DELETE` | `/properties/{id}` | JWT · dueño | Soft delete (`deletedAt`) · **204** |
-| 5 | Hecho | `PATCH` | `/properties/{id}` | JWT · dueño | Actualización parcial |
-| 6 | Hecho | `POST` | `/properties/{id}/publish` | JWT · dueño | Valida campos mínimos · **400** si incompleto |
-| 7 | Hecho | `POST` | `/properties/{id}/pause` | JWT · dueño | |
+| 4 | Hecho | `DELETE` | `/properties/{id}` | JWT · `AGENCY`/`ADMIN` · dueño | Soft delete (`deletedAt`) · **204** |
+| 5 | Hecho | `PATCH` | `/properties/{id}` | JWT · `AGENCY`/`ADMIN` · dueño | Actualización parcial |
+| 6 | Hecho | `POST` | `/properties/{id}/publish` | JWT · `AGENCY`/`ADMIN` · dueño | Valida campos mínimos · **400** si incompleto |
+| 7 | Hecho | `POST` | `/properties/{id}/pause` | JWT · `AGENCY`/`ADMIN` · dueño | |
 | 8 | Hecho | `POST` | `/auth/register` | Público | Requiere `birthDate` + `sex` · **201** · **409** email dup · **400** `ADMIN` |
 | 9 | Hecho | `POST` | `/auth/login` | Público | **200** + JWT · **401** password mala |
 | 10 | Hecho | `POST` | `/auth/logout` | JWT | Denylist `jti` · **204** |
 | 11 | Hecho | `GET` | `/me` | JWT | Perfil |
 | 12 | Hecho | `PATCH` | `/me` | JWT | Nombre / agency / password (parcial) |
 | 13 | Hecho | `GET` | `/me/properties` | JWT | Página de avisos propios + filtros |
-| 14 | Hecho | `POST` | `/properties/{id}/images` | JWT · dueño | Multipart `file` (jpeg/png/webp) · **201** |
-| 15 | Hecho | `PATCH` | `/properties/{id}/images/{imageId}` | JWT · dueño | Reemplaza archivo |
-| 16 | Hecho | `DELETE` | `/properties/{id}/images/{imageId}` | JWT · dueño | **204** |
+| 14 | Hecho | `POST` | `/properties/{id}/images` | JWT · `AGENCY`/`ADMIN` · dueño | Multipart `file` (jpeg/png/webp) · **201** |
+| 15 | Hecho | `PATCH` | `/properties/{id}/images/{imageId}` | JWT · `AGENCY`/`ADMIN` · dueño | Reemplaza archivo |
+| 16 | Hecho | `DELETE` | `/properties/{id}/images/{imageId}` | JWT · `AGENCY`/`ADMIN` · dueño | **204** |
 | 17 | Hecho | `POST` | `/properties/{id}/inquiries` | Público | Solo si aviso `PUBLISHED` · **201** · **409** si no |
 | 18 | Hecho | `GET` | `/me/inquiries` | JWT | Página + `unreadCount`; query `unreadOnly`, `propertyId` |
 | 19 | Hecho | `GET` | `/me/inquiries/{inquiryId}` | JWT | Detalle · **404** si no es del dueño |
@@ -161,6 +161,13 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 ### `POST /api/v1/auth/logout` · JWT
 
 **204**
+
+Roles en el token (`ROLE_USER` / `ROLE_AGENCY` / `ROLE_ADMIN`):
+
+* **Público:** buscar avisos, ficha publicada, register, login, mandar consulta, `/uploads`.
+* **Cualquier autenticado (`USER`, `AGENCY`, `ADMIN`):** `/me`, logout, inbox.
+* **`AGENCY` o `ADMIN`:** crear/editar/borrar/publicar/pausar avisos y fotos. Un `USER` logueado recibe **403**.
+* Además, el service chequea **dueño** (otro `AGENCY` no edita el aviso ajeno → **403**).
 
 ---
 

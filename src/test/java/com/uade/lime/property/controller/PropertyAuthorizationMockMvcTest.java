@@ -96,8 +96,8 @@ class PropertyAuthorizationMockMvcTest {
                 "owner@example.com",
                 "encoded-password",
                 "Owner User",
-                UserRole.USER,
-                null,
+                UserRole.AGENCY,
+                "Lime Test Agency",
                 birthDate,
                 Sex.MALE,
                 now));
@@ -105,11 +105,34 @@ class PropertyAuthorizationMockMvcTest {
                 "other@example.com",
                 "encoded-password",
                 "Other User",
-                UserRole.USER,
-                null,
+                UserRole.AGENCY,
+                "Otra Agencia",
                 birthDate,
                 Sex.FEMALE,
                 now));
+    }
+
+    @Test
+    void create_asUserRole_returns403() throws Exception {
+        User buyer = userRepository.save(User.register(
+                "buyer@example.com",
+                "encoded-password",
+                "Buyer User",
+                UserRole.USER,
+                null,
+                LocalDate.of(1995, 1, 1),
+                Sex.OTHER,
+                Instant.now()));
+
+        mockMvc.perform(post("/api/v1/properties")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(buyer))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "No deberia crearse"
+                                }
+                                """))
+                .andExpect(status().isForbidden());
     }
 
     @Test

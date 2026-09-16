@@ -361,8 +361,8 @@ class PropertyEndpointsMockMvcTest {
                 email,
                 "encoded-password",
                 name,
-                UserRole.USER,
-                null,
+                UserRole.AGENCY,
+                "Lime Test Agency",
                 LocalDate.of(1995, 1, 1),
                 sex,
                 Instant.now());
