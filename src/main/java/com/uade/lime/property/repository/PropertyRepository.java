@@ -13,5 +13,6 @@ import com.uade.lime.property.model.Property;
 public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSpecificationExecutor<Property> {
 
     Optional<Property> findByIdAndDeletedAtIsNull(Long id);
+    boolean existsByIdAndOwner_IdAndDeletedAtIsNull(Long id, Long ownerId);
     List<Property> findByOwner_IdAndDeletedAtIsNull(Long ownerId);
 }
