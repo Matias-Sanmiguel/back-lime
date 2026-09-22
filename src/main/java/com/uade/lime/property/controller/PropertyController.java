@@ -50,7 +50,7 @@ public class PropertyController {
     }
 
     @GetMapping
-    public PageResponse<PropertyResponse> list(
+    public ResponseEntity<PageResponse<PropertyResponse>> list(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String city,
@@ -62,8 +62,9 @@ public class PropertyController {
             @RequestParam(required = false) String province,
             @RequestParam(required = false) @PositiveOrZero Integer minBedrooms,
             @RequestParam(required = false) @PositiveOrZero Integer minBathrooms) {
-        return service.list(
+        PageResponse<PropertyResponse> result = service.list(
                 page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping
@@ -103,16 +104,18 @@ public class PropertyController {
     }
 
     @GetMapping("/{id}")
-    public PropertyResponse get(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
-        return service.get(id, user);
+    public ResponseEntity<PropertyResponse> get(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+        PropertyResponse result = service.get(id, user);
+        return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/{id}")
-    public PropertyResponse update(
+    public ResponseEntity<PropertyResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody UpdatePropertyRequest request,
             @AuthenticationPrincipal UserPrincipal user) {
-        return service.update(id, request, user);
+        PropertyResponse result = service.update(id, request, user);
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}")
@@ -122,13 +125,15 @@ public class PropertyController {
     }
 
     @PostMapping("/{id}/publish")
-    public PropertyResponse publish(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
-        return service.publish(id, user);
+    public ResponseEntity<PropertyResponse> publish(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+        PropertyResponse result = service.publish(id, user);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/{id}/pause")
-    public PropertyResponse pause(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
-        return service.pause(id, user);
+    public ResponseEntity<PropertyResponse> pause(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+        PropertyResponse result = service.pause(id, user);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/{id}/inquiries")
