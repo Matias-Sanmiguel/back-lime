@@ -10,8 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.uade.lime.property.dto.InquiryInboxResponse;
+ import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
+import com.uade.lime.property.dto.InquirySearchCriteria;
 import com.uade.lime.property.model.Inquiry;
 import com.uade.lime.property.model.Property;
 import com.uade.lime.property.repository.InquiryRepository;
@@ -28,14 +29,13 @@ public class InquiryService {
         this.propertyRepository = propertyRepository;
     }
 
-    @Transactional(readOnly = true)
-    public InquiryInboxResponse listMine(Long ownerId, int page, int size, Long propertyId, boolean unreadOnly) {
-        if (propertyId != null) {
-            requireOwnedProperty(propertyId, ownerId);
+     public InquiryInboxResponse listMine(Long ownerId, InquirySearchCriteria criteria) {
+        if (criteria.propertyId() != null) {
+            requireOwnedProperty(criteria.propertyId(), ownerId);
         }
 
-        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Inquiry> inquiries = findInboxPage(ownerId, propertyId, unreadOnly, pageable);
+        var pageable = PageRequest.of(criteria.page(), criteria.size(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Inquiry> inquiries = findInboxPage(ownerId, criteria.propertyId(), criteria.unreadOnly(), pageable);
         long unreadCount = inquiryRepository.countUnreadByPropertyOwnerId(ownerId);
 
         return InquiryInboxResponse.from(inquiries.map(InquiryResponse::from), unreadCount);
