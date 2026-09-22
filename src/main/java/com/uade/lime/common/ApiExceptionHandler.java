@@ -1,43 +1,61 @@
 package com.uade.lime.common;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.uade.lime.common.exception.RecursoNoEncontradoException;
 
 import jakarta.validation.ConstraintViolationException;
 
-@RestControllerAdvice
+
+@ControllerAdvice
 public class ApiExceptionHandler {
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException exception) {
+        String detail = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .reduce((a, b) -> a + "; " + b)
+                .orElse("Invalid request body");
+        return buildResponse(HttpStatus.BAD_REQUEST, "Invalid request body", detail);
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
-    public ProblemDetail handleConstraintViolation(ConstraintViolationException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                exception.getMessage());
-        problem.setTitle("Invalid request parameters");
-        return problem;
+    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Invalid request parameters", exception.getMessage());
     }
 
     @ExceptionHandler(ArgumentInvalidException.class)
-    public ProblemDetail handleArgumentInvalid(ArgumentInvalidException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                exception.getMessage());
-        problem.setTitle("Invalid argument");
-        return problem;
+    public ResponseEntity<Object> handleArgumentInvalid(ArgumentInvalidException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Invalid argument", exception.getMessage());
     }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
-    public ProblemDetail handleRecursoNoEncontrado(RecursoNoEncontradoException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
+    public ResponseEntity<Object> handleRecursoNoEncontrado(RecursoNoEncontradoException exception) {
+        return buildResponse(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), exception.getMessage());
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ProblemDetail handleMaxUploadSize(MaxUploadSizeExceededException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "El archivo supera el tamano maximo permitido");
+    public ResponseEntity<Object> handleMaxUploadSize(MaxUploadSizeExceededException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "El archivo supera el tamano maximo permitido");
+    }
+
+    // TODO (LIM-25, esperar a Damián): sumar acá los @ExceptionHandler de sus
+    // excepciones de categoría (404 / 400 / 409 / 401-403) reusando buildResponse(...).
+
+    private ResponseEntity<Object> buildResponse(HttpStatus status, String title, String detail) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("status", status.value());
+        body.put("title", title);
+        body.put("detail", detail);
+        return ResponseEntity.status(status).body(body);
     }
 }
