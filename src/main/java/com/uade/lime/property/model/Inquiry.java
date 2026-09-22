@@ -1,6 +1,7 @@
 package com.uade.lime.property.model;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,6 +15,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "inquiries")
@@ -44,6 +46,9 @@ public class Inquiry {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+     @Setter
+    private LocalDateTime readAt;
+
     public static Inquiry create(Property property, String name, String email, String phone, String message, Instant now) {
         Inquiry inquiry = new Inquiry();
         inquiry.property = property;
@@ -52,6 +57,7 @@ public class Inquiry {
         inquiry.phone = phone;
         inquiry.message = message;
         inquiry.createdAt = now;
+
         return inquiry;
     }
 }

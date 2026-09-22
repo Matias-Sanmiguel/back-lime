@@ -1,22 +1,22 @@
 package com.uade.lime.property.repository;
-
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import com.uade.lime.property.model.Inquiry;
 
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
-    @Query("SELECT i FROM Inquiry i JOIN FETCH i.property p WHERE p.ownerId = :ownerId ORDER BY i.createdAt DESC")
-    List<Inquiry> findByPropertyOwnerId(@Param("ownerId") Long ownerId);
+    // Cuenta no leídas navegando: Inquiry -> Property -> Owner -> Id
+    long countByPropertyOwnerIdAndReadAtIsNull(Long ownerId);
 
-    long countByOwnerIdAndReadAtIsNull(Long ownerId);
+    // Trae las no leídas paginadas navegando por la propiedad
+    Page<Inquiry> findByPropertyOwnerIdAndReadAtIsNull(Long ownerId, Pageable pageable);
 
-    Page<Inquiry> findByOwnerIdAndReadAtIsNull(Long ownerId, Pageable pageable);
+    // Trae todas paginadas navegando por la propiedad
+    Page<Inquiry> findByPropertyOwnerId(Long ownerId, Pageable pageable);
 
-    Page<Inquiry> findByOwnerId(Long ownerId, Pageable pageable);
-
+    List<Inquiry> findByPropertyOwnerId(Long ownerId);
 }
