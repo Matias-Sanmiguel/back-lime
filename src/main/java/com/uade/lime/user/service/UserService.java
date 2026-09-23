@@ -3,14 +3,15 @@ package com.uade.lime.user.service;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.uade.lime.auth.model.User;
 import com.uade.lime.auth.repository.UserRepository;
+import com.uade.lime.common.exception.ArgumentInvalidException;
+import com.uade.lime.common.exception.ProhibidoException;
+import com.uade.lime.common.exception.RecursoNoEncontradoException;
 import com.uade.lime.user.dto.UpdateMeRequest;
 import com.uade.lime.user.dto.UserResponse;
 
@@ -41,15 +42,13 @@ public class UserService {
 
         if (request.newPassword() != null) {
             if (request.currentPassword() == null || request.currentPassword().isBlank()) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "currentPassword is required when newPassword is provided");
+                throw new ArgumentInvalidException("currentPassword is required when newPassword is provided");
             }
             if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "currentPassword is incorrect");
+                throw new ProhibidoException("currentPassword is incorrect");
             }
             if (exceedsBcryptByteLimit(request.newPassword())) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, "password must be at most 72 bytes when UTF-8 encoded");
+                throw new ArgumentInvalidException("password must be at most 72 bytes when UTF-8 encoded");
             }
             user.changePassword(passwordEncoder.encode(request.newPassword()), Instant.now());
         }
@@ -60,7 +59,7 @@ public class UserService {
 
     private User findUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("User not found"));
     }
 
     private boolean hasUpdates(UpdateMeRequest request) {

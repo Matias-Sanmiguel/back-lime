@@ -5,11 +5,11 @@ import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import com.uade.lime.common.exception.ArgumentInvalidException;
+import com.uade.lime.common.exception.RecursoNoEncontradoException;
 import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
 import com.uade.lime.property.dto.InquirySearchCriteria;
@@ -49,7 +49,7 @@ public class InquiryService {
     @Transactional
     public InquiryResponse markRead(Long ownerId, Long inquiryId, boolean read) {
         if (!read) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "read: false is not supported");
+            throw new ArgumentInvalidException("read: false is not supported");
         }
 
         Inquiry inquiry = requireOwnedInquiry(inquiryId, ownerId);
@@ -73,15 +73,15 @@ public class InquiryService {
 
     private void requireOwnedProperty(Long propertyId, Long ownerId) {
         if (!propertyRepository.existsByIdAndOwner_IdAndDeletedAtIsNull(propertyId, ownerId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found");
+            throw new RecursoNoEncontradoException("Property not found");
         }
     }
 
     private Inquiry requireOwnedInquiry(Long inquiryId, Long ownerId) {
         Inquiry inquiry = inquiryRepository.findByIdWithProperty(inquiryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Consulta no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Consulta no encontrada"));
         if (!ownerId.equals(inquiry.getProperty().getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Consulta no encontrada");
+            throw new RecursoNoEncontradoException("Consulta no encontrada");
         }
         return inquiry;
     }
