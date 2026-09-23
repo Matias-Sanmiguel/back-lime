@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.uade.lime.auth.dto.UserResponse;
 import com.uade.lime.auth.security.UserPrincipal;
 import com.uade.lime.property.dto.PageResponse;
 import com.uade.lime.property.dto.PropertyResponse;
@@ -21,7 +22,6 @@ import com.uade.lime.property.model.PropertyStatus;
 import com.uade.lime.property.model.PropertyType;
 import com.uade.lime.property.service.PropertyService;
 import com.uade.lime.user.dto.UpdateMeRequest;
-import com.uade.lime.user.dto.UserResponse;
 import com.uade.lime.user.service.UserService;
 
 import jakarta.validation.Valid;

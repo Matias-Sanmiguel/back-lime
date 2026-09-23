@@ -7,13 +7,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.uade.lime.auth.dto.UserResponse;
 import com.uade.lime.auth.model.User;
 import com.uade.lime.auth.repository.UserRepository;
 import com.uade.lime.common.exception.ArgumentInvalidException;
 import com.uade.lime.common.exception.ProhibidoException;
 import com.uade.lime.common.exception.RecursoNoEncontradoException;
 import com.uade.lime.user.dto.UpdateMeRequest;
-import com.uade.lime.user.dto.UserResponse;
 
 @Service
 public class UserService {
