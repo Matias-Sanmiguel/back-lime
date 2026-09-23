@@ -13,7 +13,6 @@ import org.springframework.web.server.ResponseStatusException;
 import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
 import com.uade.lime.property.model.Inquiry;
-import com.uade.lime.property.model.Property;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyRepository;
 
@@ -72,9 +71,7 @@ public class InquiryService {
     }
 
     private void requireOwnedProperty(Long propertyId, Long ownerId) {
-        Property property = propertyRepository.findByIdAndDeletedAtIsNull(propertyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
-        if (!ownerId.equals(property.getOwnerId())) {
+        if (!propertyRepository.existsByIdAndOwner_IdAndDeletedAtIsNull(propertyId, ownerId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found");
         }
     }
