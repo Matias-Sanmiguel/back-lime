@@ -1,5 +1,6 @@
 package com.uade.lime.property.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,28 +34,30 @@ public class InquiryController {
     }
 
     @GetMapping
-    public InquiryInboxResponse listMine(
+    public ResponseEntity<InquiryInboxResponse> listMine(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) Long propertyId,
             @RequestParam(defaultValue = "false") boolean unreadOnly) {
-            InquirySearchCriteria criteria = new InquirySearchCriteria(page, size, propertyId, unreadOnly);
-        return inquiryService.listMine(user.id(), criteria);
+        InquirySearchCriteria criteria = new InquirySearchCriteria(page, size, propertyId, unreadOnly);
+        return ResponseEntity.ok(inquiryService.listMine(user.id(), criteria));
     }
 
     @GetMapping("/{inquiryId}")
-    public InquiryResponse getMine(
+    public ResponseEntity<InquiryResponse> getMine(
             @AuthenticationPrincipal UserPrincipal user,
             @PathVariable Long inquiryId) {
-        return inquiryService.getMine(user.id(), inquiryId);
+        InquiryResponse result = inquiryService.getMine(user.id(), inquiryId);
+        return ResponseEntity.ok(result);
     }
 
     @PatchMapping("/{inquiryId}")
-    public InquiryResponse markRead(
+    public ResponseEntity<InquiryResponse> markRead(
             @AuthenticationPrincipal UserPrincipal user,
             @PathVariable Long inquiryId,
             @Valid @RequestBody MarkInquiryReadRequest request) {
-        return inquiryService.markRead(user.id(), inquiryId, Boolean.TRUE.equals(request.read()));
+        InquiryResponse result = inquiryService.markRead(user.id(), inquiryId, Boolean.TRUE.equals(request.read()));
+        return ResponseEntity.ok(result);
     }
 }

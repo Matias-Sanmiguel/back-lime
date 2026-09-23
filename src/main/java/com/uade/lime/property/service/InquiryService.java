@@ -10,11 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
- import com.uade.lime.property.dto.InquiryInboxResponse;
+import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
 import com.uade.lime.property.dto.InquirySearchCriteria;
 import com.uade.lime.property.model.Inquiry;
-import com.uade.lime.property.model.Property;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyRepository;
 
@@ -29,7 +28,8 @@ public class InquiryService {
         this.propertyRepository = propertyRepository;
     }
 
-     public InquiryInboxResponse listMine(Long ownerId, InquirySearchCriteria criteria) {
+    @Transactional(readOnly = true)
+    public InquiryInboxResponse listMine(Long ownerId, InquirySearchCriteria criteria) {
         if (criteria.propertyId() != null) {
             requireOwnedProperty(criteria.propertyId(), ownerId);
         }
@@ -72,9 +72,7 @@ public class InquiryService {
     }
 
     private void requireOwnedProperty(Long propertyId, Long ownerId) {
-        Property property = propertyRepository.findByIdAndDeletedAtIsNull(propertyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
-        if (!ownerId.equals(property.getOwnerId())) {
+        if (!propertyRepository.existsByIdAndOwner_IdAndDeletedAtIsNull(propertyId, ownerId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found");
         }
     }
