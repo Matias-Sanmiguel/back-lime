@@ -5,13 +5,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
-import com.uade.lime.common.ArgumentInvalidException;
+import com.uade.lime.common.exception.ArgumentInvalidException;
+import com.uade.lime.common.exception.ConflictoException;
+import com.uade.lime.common.exception.NoAutorizadoException;
 
 import com.uade.lime.auth.dto.AuthResponse;
 import com.uade.lime.auth.dto.LoginRequest;
@@ -67,7 +67,7 @@ public class AuthService {
 
         String email = normalizeEmail(request.email());
         if (userRepository.existsByEmail(email)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
+            throw new ConflictoException("Email is already registered");
         }
 
         User user = User.register(
@@ -82,7 +82,7 @@ public class AuthService {
         try {
             user = userRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
+            throw new ConflictoException("Email is already registered");
         }
 
         return issueAuthResponse(user);
@@ -91,12 +91,12 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         if (exceedsBcryptByteLimit(request.password())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, BAD_CREDENTIALS_MESSAGE);
+            throw new NoAutorizadoException(BAD_CREDENTIALS_MESSAGE);
         }
         User user = userRepository.findByEmail(normalizeEmail(request.email()))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, BAD_CREDENTIALS_MESSAGE));
+                .orElseThrow(() -> new NoAutorizadoException(BAD_CREDENTIALS_MESSAGE));
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, BAD_CREDENTIALS_MESSAGE);
+            throw new NoAutorizadoException(BAD_CREDENTIALS_MESSAGE);
         }
         return issueAuthResponse(user);
     }

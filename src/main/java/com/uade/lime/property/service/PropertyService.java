@@ -12,15 +12,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.uade.lime.auth.model.User;
 import com.uade.lime.auth.repository.UserRepository;
 import com.uade.lime.auth.security.UserPrincipal;
+import com.uade.lime.common.exception.ArgumentInvalidException;
+import com.uade.lime.common.exception.ConflictoException;
+import com.uade.lime.common.exception.NoAutorizadoException;
+import com.uade.lime.common.exception.ProhibidoException;
 import com.uade.lime.common.exception.RecursoNoEncontradoException;
 import com.uade.lime.property.dto.CreateInquiryRequest;
 import com.uade.lime.property.dto.CreatePropertyRequest;
@@ -181,7 +183,7 @@ public class PropertyService {
 
     private void validatePriceRange(PropertySearchCriteria criteria) {
         if (criteria.hasInvalidPriceRange()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
+            throw new ArgumentInvalidException("minPrice cannot be greater than maxPrice");
         }
     }
 
@@ -270,7 +272,7 @@ public class PropertyService {
         Property property = findActive(propertyId);
 
         if (property.getStatus() != PropertyStatus.PUBLISHED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Property is not published, cannot receive inquiries");       
+            throw new ConflictoException("Property is not published, cannot receive inquiries");
         }
         Inquiry inquiry = Inquiry.create(
                 property,
@@ -297,12 +299,12 @@ public class PropertyService {
         requireOwner(property, user.id());
         PropertyStatus current = property.getStatus();
         if (current != PropertyStatus.DRAFT && current != PropertyStatus.PAUSED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot publish a property in status " + current);
+            throw new ConflictoException("Cannot publish a property in status " + current);
         }
         try {
             property.publish(Instant.now());
         } catch (IllegalStateException ex) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+            throw new ArgumentInvalidException(ex.getMessage());
         }
         return PropertyResponse.from(property, ownerResponseOf(user));
     }
@@ -312,7 +314,7 @@ public class PropertyService {
         Property property = findActive(id);
         requireOwner(property, user.id());
         if (property.getStatus() != PropertyStatus.PUBLISHED) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot pause a property in status " + property.getStatus());
+            throw new ConflictoException("Cannot pause a property in status " + property.getStatus());
         }
         property.pause(Instant.now());
         return PropertyResponse.from(property, ownerResponseOf(user));
@@ -320,13 +322,13 @@ public class PropertyService {
 
     private void requireOwner(Property property, Long userId) {
         if (!property.getOwnerId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the owner of this property");
+            throw new ProhibidoException("You are not the owner of this property");
         }
     }
 
     private User ownerEntityOf(UserPrincipal owner) {
         return userRepository.findById(owner.id())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authenticated user not found"));
+                .orElseThrow(() -> new NoAutorizadoException("Authenticated user not found"));
     }
 
     private OwnerResponse ownerResponseOf(UserPrincipal user) {

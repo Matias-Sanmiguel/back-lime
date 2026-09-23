@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.uade.lime.common.exception.ArgumentInvalidException;
+import com.uade.lime.common.exception.ConflictoException;
+import com.uade.lime.common.exception.NoAutorizadoException;
+import com.uade.lime.common.exception.ProhibidoException;
 import com.uade.lime.common.exception.RecursoNoEncontradoException;
 
 import jakarta.validation.ConstraintViolationException;
@@ -42,14 +46,26 @@ public class ApiExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, HttpStatus.NOT_FOUND.getReasonPhrase(), exception.getMessage());
     }
 
+    @ExceptionHandler(ConflictoException.class)
+    public ResponseEntity<Object> handleConflicto(ConflictoException exception) {
+        return buildResponse(HttpStatus.CONFLICT, HttpStatus.CONFLICT.getReasonPhrase(), exception.getMessage());
+    }
+
+    @ExceptionHandler(NoAutorizadoException.class)
+    public ResponseEntity<Object> handleNoAutorizado(NoAutorizadoException exception) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, HttpStatus.UNAUTHORIZED.getReasonPhrase(), exception.getMessage());
+    }
+
+    @ExceptionHandler(ProhibidoException.class)
+    public ResponseEntity<Object> handleProhibido(ProhibidoException exception) {
+        return buildResponse(HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN.getReasonPhrase(), exception.getMessage());
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Object> handleMaxUploadSize(MaxUploadSizeExceededException exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 "El archivo supera el tamano maximo permitido");
     }
-
-    // TODO (LIM-25, esperar a Damián): sumar acá los @ExceptionHandler de sus
-    // excepciones de categoría (404 / 400 / 409 / 401-403) reusando buildResponse(...).
 
     private ResponseEntity<Object> buildResponse(HttpStatus status, String title, String detail) {
         Map<String, Object> body = new LinkedHashMap<>();
