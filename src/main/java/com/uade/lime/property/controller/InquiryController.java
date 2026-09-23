@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.uade.lime.auth.security.UserPrincipal;
 import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
+import com.uade.lime.property.dto.InquirySearchCriteria;
 import com.uade.lime.property.dto.MarkInquiryReadRequest;
 import com.uade.lime.property.service.InquiryService;
 
@@ -39,8 +40,8 @@ public class InquiryController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) Long propertyId,
             @RequestParam(defaultValue = "false") boolean unreadOnly) {
-        InquiryInboxResponse result = inquiryService.listMine(user.id(), page, size, propertyId, unreadOnly);
-        return ResponseEntity.ok(result);
+        InquirySearchCriteria criteria = new InquirySearchCriteria(page, size, propertyId, unreadOnly);
+        return ResponseEntity.ok(inquiryService.listMine(user.id(), criteria));
     }
 
     @GetMapping("/{inquiryId}")

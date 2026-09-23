@@ -1,11 +1,11 @@
 package com.uade.lime.property.service;
 
-import java.math.BigDecimal;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.uade.lime.auth.model.User;
@@ -28,20 +29,20 @@ import com.uade.lime.property.dto.InquiryResponse;
 import com.uade.lime.property.dto.OwnerResponse;
 import com.uade.lime.property.dto.PageResponse;
 import com.uade.lime.property.dto.PropertyResponse;
+import com.uade.lime.property.dto.PropertySearchCriteria;
 import com.uade.lime.property.dto.UpdatePropertyRequest;
 import com.uade.lime.property.model.Inquiry;
-import com.uade.lime.property.model.OperationType;
 import com.uade.lime.property.model.Property;
 import com.uade.lime.property.model.PropertyImage;
 import com.uade.lime.property.model.PropertyStatus;
-import com.uade.lime.property.model.PropertyType;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyImageRepository;
 import com.uade.lime.property.repository.PropertyRepository;
 import com.uade.lime.property.storage.FileStorageService;
-import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 
 @Service
 public class PropertyService {
@@ -106,58 +107,15 @@ public class PropertyService {
 
         return ImageResponse.from(saved);
     }
-    @Transactional(readOnly = true)
-    public PageResponse<PropertyResponse> list(
-            int page,
-            int size,
-            String city,
-            PropertyType type,
-            OperationType operation,
-            PropertyStatus status,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            String province,
-            Integer minBedrooms,
-            Integer minBathrooms) {
-        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
-        }
+       @Transactional(readOnly = true)
+    public PageResponse<PropertyResponse> list(PropertySearchCriteria criteria) {
+        validatePriceRange(criteria);
 
-        Specification<Property> filters = (root, query, builder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(builder.isNull(root.get("deletedAt")));
-            // Public listing only shows published ads (Lucas #15).
-            predicates.add(builder.equal(root.get("status"), PropertyStatus.PUBLISHED));
-            if (city != null && !city.isBlank()) {
-                predicates.add(builder.equal(builder.lower(root.get("city")), city.trim().toLowerCase()));
-            }
-            if (type != null) {
-                predicates.add(builder.equal(root.get("type"), type));
-            }
-            if (operation != null) {
-                predicates.add(builder.equal(root.get("operation"), operation));
-            }
-            if (minPrice != null) {
-                predicates.add(builder.greaterThanOrEqualTo(root.get("price"), minPrice));
-            }
-            if (maxPrice != null) {
-                predicates.add(builder.lessThanOrEqualTo(root.get("price"), maxPrice));
-            }
-            if (province != null && !province.isBlank()) {
-                predicates.add(builder.equal(builder.lower(root.get("province")), province.trim().toLowerCase()));
-            }
-            if (minBedrooms != null) {
-                predicates.add(builder.greaterThanOrEqualTo(root.get("bedrooms"), minBedrooms));
-            }
-            if (minBathrooms != null) {
-                predicates.add(builder.greaterThanOrEqualTo(root.get("bathrooms"), minBathrooms));
-            }
-            return builder.and(predicates.toArray(Predicate[]::new));
-        };
+        // Public listing only shows published ads (Lucas #15).
+        Specification<Property> filters = buildFilters(criteria, (root, builder) -> List.of(
+                builder.equal(root.get("status"), PropertyStatus.PUBLISHED)));
 
-        Page<Property> propertyPage = repository.findAll(
-                filters,
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        Page<Property> propertyPage = repository.findAll(filters, pageRequestOf(criteria));
         Map<Long, OwnerResponse> ownersById = userRepository
                 .findAllById(propertyPage.getContent().stream().map(Property::getOwnerId).distinct().toList())
                 .stream()
@@ -166,7 +124,6 @@ public class PropertyService {
                 .map(property -> PropertyResponse.from(property, ownersById.get(property.getOwnerId())));
         return PageResponse.from(result);
     }
-
     @Transactional
     public PropertyResponse create(CreatePropertyRequest request, UserPrincipal owner) {
         Instant now = Instant.now();
@@ -203,64 +160,69 @@ public class PropertyService {
         return PropertyResponse.from(property, owner);
     }
 
-    @Transactional(readOnly = true)
-    public PageResponse<PropertyResponse> listMine(
-            UserPrincipal user,
-            int page,
-            int size,
-            String city,
-            PropertyType type,
-            OperationType operation,
-            PropertyStatus status,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            String province,
-            Integer minBedrooms,
-            Integer minBathrooms) {
-        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
-        }
+       @Transactional(readOnly = true)
+    public PageResponse<PropertyResponse> listMine(UserPrincipal user, PropertySearchCriteria criteria) {
+        validatePriceRange(criteria);
 
-        Specification<Property> filters = (root, query, builder) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(builder.isNull(root.get("deletedAt")));
-            predicates.add(builder.equal(root.get("owner").get("id"), user.id()));
-            if (city != null && !city.isBlank()) {
-                predicates.add(builder.equal(builder.lower(root.get("city")), city.trim().toLowerCase()));
+        Specification<Property> filters = buildFilters(criteria, (root, builder) -> {
+            List<Predicate> extra = new ArrayList<>();
+            extra.add(builder.equal(root.get("owner").get("id"), user.id()));
+            if (criteria.status() != null) {
+                extra.add(builder.equal(root.get("status"), criteria.status()));
             }
-            if (type != null) {
-                predicates.add(builder.equal(root.get("type"), type));
-            }
-            if (operation != null) {
-                predicates.add(builder.equal(root.get("operation"), operation));
-            }
-            if (status != null) {
-                predicates.add(builder.equal(root.get("status"), status));
-            }
-            if (minPrice != null) {
-                predicates.add(builder.greaterThanOrEqualTo(root.get("price"), minPrice));
-            }
-            if (maxPrice != null) {
-                predicates.add(builder.lessThanOrEqualTo(root.get("price"), maxPrice));
-            }
-            if (province != null && !province.isBlank()) {
-                predicates.add(builder.equal(builder.lower(root.get("province")), province.trim().toLowerCase()));
-            }
-            if (minBedrooms != null) {
-                predicates.add(builder.greaterThanOrEqualTo(root.get("bedrooms"), minBedrooms));
-            }
-            if (minBathrooms != null) {
-                predicates.add(builder.greaterThanOrEqualTo(root.get("bathrooms"), minBathrooms));
-            }
-            return builder.and(predicates.toArray(Predicate[]::new));
-        };
+            return extra;
+        });
 
-        Page<Property> propertyPage = repository.findAll(
-                filters,
-                PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt")));
+        Page<Property> propertyPage = repository.findAll(filters, pageRequestOf(criteria));
         OwnerResponse owner = ownerResponseOf(user);
         Page<PropertyResponse> result = propertyPage.map(property -> PropertyResponse.from(property, owner));
         return PageResponse.from(result);
+    }
+
+    private void validatePriceRange(PropertySearchCriteria criteria) {
+        if (criteria.hasInvalidPriceRange()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "minPrice cannot be greater than maxPrice");
+        }
+    }
+
+    private PageRequest pageRequestOf(PropertySearchCriteria criteria) {
+        return PageRequest.of(criteria.page(), criteria.size(), Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
+    private Specification<Property> buildFilters(
+            PropertySearchCriteria criteria,
+            BiFunction<Root<Property>, CriteriaBuilder, List<Predicate>> extraPredicates) {
+        return (root, query, builder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(builder.isNull(root.get("deletedAt")));
+            predicates.addAll(extraPredicates.apply(root, builder));
+            if (criteria.city() != null && !criteria.city().isBlank()) {
+                predicates.add(builder.equal(builder.lower(root.get("city")), criteria.city().trim().toLowerCase()));
+            }
+            if (criteria.type() != null) {
+                predicates.add(builder.equal(root.get("type"), criteria.type()));
+            }
+            if (criteria.operation() != null) {
+                predicates.add(builder.equal(root.get("operation"), criteria.operation()));
+            }
+            if (criteria.minPrice() != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("price"), criteria.minPrice()));
+            }
+            if (criteria.maxPrice() != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("price"), criteria.maxPrice()));
+            }
+            if (criteria.province() != null && !criteria.province().isBlank()) {
+                predicates.add(builder.equal(
+                        builder.lower(root.get("province")), criteria.province().trim().toLowerCase()));
+            }
+            if (criteria.minBedrooms() != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("bedrooms"), criteria.minBedrooms()));
+            }
+            if (criteria.minBathrooms() != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("bathrooms"), criteria.minBathrooms()));
+            }
+            return builder.and(predicates.toArray(Predicate[]::new));
+        };
     }
 
     @Transactional
