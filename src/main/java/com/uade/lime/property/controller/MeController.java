@@ -3,6 +3,7 @@ package com.uade.lime.property.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,7 +44,7 @@ public class MeController {
     }
 
     @GetMapping("/properties")
-    public PageResponse<PropertyResponse> listMine(
+    public ResponseEntity<PageResponse<PropertyResponse>> listMine(
             @AuthenticationPrincipal UserPrincipal user,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
@@ -56,19 +57,19 @@ public class MeController {
             @RequestParam(required = false) String province,
             @RequestParam(required = false) @PositiveOrZero Integer minBedrooms,
             @RequestParam(required = false) @PositiveOrZero Integer minBathrooms) {
-        return propertyService.listMine(
-                user, page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms);
+        return ResponseEntity.ok(propertyService.listMine(
+                user, page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms));
     }
 
     @GetMapping
-    public UserResponse me(@AuthenticationPrincipal UserPrincipal user) {
-        return userService.getMe(user.id());
+    public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserPrincipal user) {
+        return ResponseEntity.ok(userService.getMe(user.id()));
     }
 
     @PatchMapping
-    public UserResponse updateMe(
+    public ResponseEntity<UserResponse> updateMe(
             @AuthenticationPrincipal UserPrincipal user,
             @Valid @RequestBody UpdateMeRequest request) {
-        return userService.updateMe(user.id(), request);
+        return ResponseEntity.ok(userService.updateMe(user.id(), request));
     }
 }
