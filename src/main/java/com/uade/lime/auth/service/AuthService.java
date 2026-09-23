@@ -70,15 +70,18 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email is already registered");
         }
 
-        User user = User.register(
-                email,
-                passwordEncoder.encode(request.password()),
-                request.name(),
-                role,
-                agencyName,
-                request.birthDate(),
-                request.sex(),
-                Instant.now());
+        Instant now = Instant.now();
+        User user = User.builder()
+                .email(email)
+                .passwordHash(passwordEncoder.encode(request.password()))
+                .name(request.name())
+                .role(role)
+                .agencyName(agencyName)
+                .birthDate(request.birthDate())
+                .sex(request.sex())
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
         try {
             user = userRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
