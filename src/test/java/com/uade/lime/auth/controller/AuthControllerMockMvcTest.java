@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -121,5 +122,60 @@ class AuthControllerMockMvcTest {
                 .andExpect(jsonPath("$.status", is(400)));
 
         assertThat(userRepository.count()).isZero();
+    }
+
+    @Test
+    void register_withDuplicateEmail_returns409FromConflictoException() throws Exception {
+        registerAugusto();
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRegisterBody()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status", is(409)));
+
+        assertThat(userRepository.count()).isOne();
+    }
+
+    @Test
+    void login_withWrongPassword_returns401FromNoAutorizadoException() throws Exception {
+        registerAugusto();
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "augusto@example.com",
+                                  "password": "wrong-password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status", is(401)));
+    }
+
+    @Test
+    void getProperty_nonexistentId_returns404FromRecursoNoEncontradoException() throws Exception {
+        mockMvc.perform(get("/api/v1/properties/{id}", 99_999L))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)));
+    }
+
+    private void registerAugusto() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRegisterBody()))
+                .andExpect(status().isCreated());
+    }
+
+    private static String validRegisterBody() {
+        return """
+                {
+                  "email": "augusto@example.com",
+                  "password": "password123",
+                  "name": "Augusto",
+                  "birthDate": "1995-06-15",
+                  "sex": "MALE"
+                }
+                """;
     }
 }
