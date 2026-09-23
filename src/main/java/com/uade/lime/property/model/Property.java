@@ -2,14 +2,22 @@ package com.uade.lime.property.model;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.uade.lime.auth.model.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -64,8 +72,15 @@ public class Property {
     @Column(precision = 10, scale = 2)
     private BigDecimal totalArea;
 
-    @Column(name = "owner_id")
-    private Long ownerId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
+
+    @OneToMany(mappedBy = "property")
+    private List<PropertyImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "property")
+    private List<Inquiry> inquiries = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -93,7 +108,7 @@ public class Property {
             Integer bathrooms,
             BigDecimal coveredArea,
             BigDecimal totalArea,
-            Long ownerID,
+            User owner,
             Instant now) {
         Property property = new Property();
         property.title = title;
@@ -109,11 +124,15 @@ public class Property {
         property.bathrooms = bathrooms;
         property.coveredArea = coveredArea;
         property.totalArea = totalArea;
-        property.ownerId = ownerID;
+        property.owner = owner;
         property.status = PropertyStatus.DRAFT;
         property.createdAt = now;
         property.updatedAt = now;
         return property;
+    }
+
+    public Long getOwnerId() {
+        return owner == null ? null : owner.getId();
     }
 
     public void delete(Instant now) {
@@ -122,8 +141,20 @@ public class Property {
     }
 
     public void publish(Instant now) {
+        requireComplete();
         status = PropertyStatus.PUBLISHED;
         updatedAt = now;
+    }
+
+    private void requireComplete() {
+        if (isBlank(title) || price == null || isBlank(currency) || isBlank(city) || type == null || operation == null) {
+            throw new IllegalStateException(
+                    "Cannot publish: title, price, currency, city, type and operation are required");
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     public void pause(Instant now) {

@@ -1,5 +1,6 @@
 HELP.md
 target/
+uploads/
 .env
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -33,3 +34,6 @@ build/
 ### VS Code / Cursor ###
 .cursor/
 .vscode/
+
+# Frontend vive en ../lime-frontend (fuera de este repo TPO backend)
+frontend/

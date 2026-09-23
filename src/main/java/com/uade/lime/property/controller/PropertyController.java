@@ -9,16 +9,17 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.uade.lime.auth.security.UserPrincipal;
-import com.uade.lime.property.dto.CreateImageRequest;
 import com.uade.lime.property.dto.CreateInquiryRequest;
 import com.uade.lime.property.dto.CreatePropertyRequest;
 import com.uade.lime.property.dto.ImageResponse;
@@ -30,6 +31,7 @@ import com.uade.lime.property.model.OperationType;
 import com.uade.lime.property.model.PropertyStatus;
 import com.uade.lime.property.model.PropertyType;
 import com.uade.lime.property.service.PropertyService;
+
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -56,8 +58,12 @@ public class PropertyController {
             @RequestParam(required = false) OperationType operation,
             @RequestParam(required = false) PropertyStatus status,
             @RequestParam(required = false) @PositiveOrZero BigDecimal minPrice,
-            @RequestParam(required = false) @PositiveOrZero BigDecimal maxPrice) {
-        return service.list(page, size, city, type, operation, status, minPrice, maxPrice);
+            @RequestParam(required = false) @PositiveOrZero BigDecimal maxPrice,
+            @RequestParam(required = false) String province,
+            @RequestParam(required = false) @PositiveOrZero Integer minBedrooms,
+            @RequestParam(required = false) @PositiveOrZero Integer minBathrooms) {
+        return service.list(
+                page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms);
     }
 
     @PostMapping
@@ -68,15 +74,37 @@ public class PropertyController {
         return ResponseEntity.created(URI.create("/api/v1/properties/" + created.id())).body(created);
     }
 
-    @PostMapping("/{id}/images")
-    public ResponseEntity<ImageResponse> addImage(@PathVariable Long id, @Valid @RequestBody CreateImageRequest request) {
-        ImageResponse created = service.addImage(id, request);
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImageResponse> addImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserPrincipal user) {
+        ImageResponse created = service.addImage(id, file, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PatchMapping(value = "/{id}/images/{imageId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ImageResponse> replaceImage(
+            @PathVariable Long id,
+            @PathVariable Long imageId,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal UserPrincipal user) {
+        ImageResponse updated = service.replaceImage(id, imageId, file, user);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ResponseEntity<Void> deleteImage(
+            @PathVariable Long id,
+            @PathVariable Long imageId,
+            @AuthenticationPrincipal UserPrincipal user) {
+        service.deleteImage(id, imageId, user);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}")
-    public PropertyResponse get(@PathVariable Long id) {
-        return service.get(id);
+    public PropertyResponse get(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+        return service.get(id, user);
     }
 
     @PatchMapping("/{id}")

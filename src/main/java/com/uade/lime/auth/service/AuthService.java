@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.uade.lime.common.ArgumentInvalidException;
+
 import com.uade.lime.auth.dto.AuthResponse;
 import com.uade.lime.auth.dto.LoginRequest;
 import com.uade.lime.auth.dto.RegisterRequest;
@@ -49,16 +51,16 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         UserRole role = request.role() != null ? request.role() : UserRole.USER;
         if (role == UserRole.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot register a user with role ADMIN");
+            throw new ArgumentInvalidException("Cannot register a user with role ADMIN");
         }
         if (exceedsBcryptByteLimit(request.password())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "password must be at most 72 bytes when UTF-8 encoded");
+            throw new ArgumentInvalidException("password must be at most 72 bytes when UTF-8 encoded");
         }
 
         String agencyName = null;
         if (role == UserRole.AGENCY) {
             if (request.agencyName() == null || request.agencyName().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "agencyName is required for role AGENCY");
+                throw new ArgumentInvalidException("agencyName is required for role AGENCY");
             }
             agencyName = request.agencyName();
         }
@@ -74,6 +76,8 @@ public class AuthService {
                 request.name(),
                 role,
                 agencyName,
+                request.birthDate(),
+                request.sex(),
                 Instant.now());
         try {
             user = userRepository.save(user);

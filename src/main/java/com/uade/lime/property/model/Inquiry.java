@@ -46,8 +46,13 @@ public class Inquiry {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+<<<<<<< HEAD
      @Setter
     private LocalDateTime readAt;
+=======
+    @Column
+    private Instant readAt;
+>>>>>>> origin/main
 
     public static Inquiry create(Property property, String name, String email, String phone, String message, Instant now) {
         Inquiry inquiry = new Inquiry();
@@ -59,5 +64,11 @@ public class Inquiry {
         inquiry.createdAt = now;
 
         return inquiry;
+    }
+
+    public void markRead(Instant now) {
+        if (this.readAt == null) {
+            this.readAt = now;
+        }
     }
 }
