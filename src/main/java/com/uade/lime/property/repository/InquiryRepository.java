@@ -1,35 +1,20 @@
 package com.uade.lime.property.repository;
+
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-<<<<<<< HEAD
-=======
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
->>>>>>> origin/main
 
 import com.uade.lime.property.model.Inquiry;
 
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
-<<<<<<< HEAD
-    // Cuenta no leídas navegando: Inquiry -> Property -> Owner -> Id
-    long countByPropertyOwnerIdAndReadAtIsNull(Long ownerId);
-
-    // Trae las no leídas paginadas navegando por la propiedad
-    Page<Inquiry> findByPropertyOwnerIdAndReadAtIsNull(Long ownerId, Pageable pageable);
-
-    // Trae todas paginadas navegando por la propiedad
-    Page<Inquiry> findByPropertyOwnerId(Long ownerId, Pageable pageable);
-
-    List<Inquiry> findByPropertyOwnerId(Long ownerId);
-}
-=======
     @Query("SELECT i FROM Inquiry i JOIN FETCH i.property p WHERE p.owner.id = :ownerId ORDER BY i.createdAt DESC")
     List<Inquiry> findByPropertyOwnerId(@Param("ownerId") Long ownerId);
 
@@ -61,4 +46,3 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @Query("SELECT count(i) FROM Inquiry i JOIN i.property p WHERE p.owner.id = :ownerId AND i.readAt IS NULL")
     long countUnreadByPropertyOwnerId(@Param("ownerId") Long ownerId);
 }
->>>>>>> origin/main

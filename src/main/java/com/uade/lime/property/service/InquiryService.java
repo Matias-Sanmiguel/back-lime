@@ -1,61 +1,3 @@
-<<<<<<< HEAD
-package com.uade.lime.property.service;
-
-import com.uade.lime.common.ResourceNotFoundException;
-import com.uade.lime.property.dto.InquiryInboxResponse;
-import com.uade.lime.property.model.Inquiry;
-import com.uade.lime.property.repository.InquiryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDateTime;
-import java.util.Objects;
-
-@Service
-public class InquiryService {
-
-    @Autowired
-    private InquiryRepository inquiryRepository;
-
-    @Transactional(readOnly = true)
-    public InquiryInboxResponse getInquiries(Long ownerId, boolean unreadOnly, Pageable pageable) {
-        Page<Inquiry> inquiries;
-        if (unreadOnly) {
-            inquiries = inquiryRepository.findByPropertyOwnerIdAndReadAtIsNull(ownerId, pageable);
-        } else {
-            inquiries = inquiryRepository.findByPropertyOwnerId(ownerId, pageable);
-        }
-        long unreadCount = inquiryRepository.countByPropertyOwnerIdAndReadAtIsNull(ownerId);
-        return new InquiryInboxResponse(inquiries, unreadCount);
-    }
-
-    @Transactional(readOnly = true)
-    public Inquiry getInquiryById(Long id, Long ownerId) {
-        Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Consulta no encontrada con ID: " + id));
-        
-        // Validación de propiedad
-        if (!Objects.equals(inquiry.getProperty().getOwnerId(), ownerId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permiso para acceder a esta consulta");
-        }
-        return inquiry;
-    }
-
-    @Transactional
-    public Inquiry markAsRead(Long id, Long ownerId) {
-        // Reutilizamos el método anterior que ya busca y valida los permisos
-        Inquiry inquiry = getInquiryById(id, ownerId); 
-        
-        inquiry.setReadAt(LocalDateTime.now());
-        return inquiryRepository.save(inquiry);
-    }
-}
-=======
 package com.uade.lime.property.service;
 
 import java.time.Instant;
@@ -70,8 +12,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
+import com.uade.lime.property.dto.InquirySearchCriteria;
 import com.uade.lime.property.model.Inquiry;
-import com.uade.lime.property.model.Property;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyRepository;
 
@@ -87,13 +29,13 @@ public class InquiryService {
     }
 
     @Transactional(readOnly = true)
-    public InquiryInboxResponse listMine(Long ownerId, int page, int size, Long propertyId, boolean unreadOnly) {
-        if (propertyId != null) {
-            requireOwnedProperty(propertyId, ownerId);
+    public InquiryInboxResponse listMine(Long ownerId, InquirySearchCriteria criteria) {
+        if (criteria.propertyId() != null) {
+            requireOwnedProperty(criteria.propertyId(), ownerId);
         }
 
-        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Inquiry> inquiries = findInboxPage(ownerId, propertyId, unreadOnly, pageable);
+        var pageable = PageRequest.of(criteria.page(), criteria.size(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Inquiry> inquiries = findInboxPage(ownerId, criteria.propertyId(), criteria.unreadOnly(), pageable);
         long unreadCount = inquiryRepository.countUnreadByPropertyOwnerId(ownerId);
 
         return InquiryInboxResponse.from(inquiries.map(InquiryResponse::from), unreadCount);
@@ -130,9 +72,7 @@ public class InquiryService {
     }
 
     private void requireOwnedProperty(Long propertyId, Long ownerId) {
-        Property property = propertyRepository.findByIdAndDeletedAtIsNull(propertyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
-        if (!ownerId.equals(property.getOwnerId())) {
+        if (!propertyRepository.existsByIdAndOwner_IdAndDeletedAtIsNull(propertyId, ownerId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found");
         }
     }
@@ -146,4 +86,3 @@ public class InquiryService {
         return inquiry;
     }
 }
->>>>>>> origin/main
