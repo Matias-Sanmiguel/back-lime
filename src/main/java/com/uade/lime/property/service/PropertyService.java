@@ -350,4 +350,17 @@ public class PropertyService {
                 || request.coveredArea() != null
                 || request.totalArea() != null;
     }
+
+    @Transactional(readOnly = true)
+    public List<ImageResponse> getImages(Long propertyId, UserPrincipal user) {
+        Property property = findActive(propertyId);
+        boolean isOwner = user != null && property.getOwnerId().equals(user.id());
+        if (property.getStatus() != PropertyStatus.PUBLISHED && !isOwner) {
+            throw new RecursoNoEncontradoException("Property not found");
+        }
+
+        return imageRepository.findByPropertyIdOrderByCreatedAtAsc(propertyId).stream()
+                .map(ImageResponse::from)
+                .collect(Collectors.toList());
+    }
 }

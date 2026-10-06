@@ -2,6 +2,7 @@ package com.uade.lime.property.controller;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -142,5 +143,10 @@ public class PropertyController {
             @Valid @RequestBody CreateInquiryRequest request) {
         InquiryResponse created = service.createInquiry(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+    
+    @GetMapping("/{id}/images")
+    public ResponseEntity<List<ImageResponse>> getImages(@PathVariable Long id, @AuthenticationPrincipal UserPrincipal user) {
+        return ResponseEntity.ok(service.getImages(id, user));
     }
 }
