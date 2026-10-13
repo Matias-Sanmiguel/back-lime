@@ -1,6 +1,7 @@
 package com.uade.lime.auth.security;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.uade.lime.auth.repository.DenylistedTokenRepository;
 
@@ -37,9 +41,12 @@ public class SecurityConfig {
                 new JwtAuthenticationFilter(jwtService, denylistedTokenRepository);
 
         http
+                // 1. HABILITAMOS CORS EN EL FILTER CHAIN DE SECURITY
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/properties", "/api/v1/properties/{id}").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/properties/{id}/inquiries").permitAll()
@@ -73,10 +80,20 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Los rechazos de la capa de seguridad ocurren antes del DispatcherServlet, así que
-    // ApiExceptionHandler (@RestControllerAdvice) nunca los ve. Se arma el JSON a mano
-    // (en vez de reusar el ObjectMapper de Spring) para no atarse a qué major de Jackson
-    // esté resolviendo el proyecto en cada momento.
+    // 2. CONFIGURAMOS LA FUENTE DE CORS (ORÍGENES PERMITIDOS)
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173")); 
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     private void writeProblemDetail(HttpServletResponse response, HttpStatus status, String detail)
             throws IOException {
         response.setStatus(status.value());
@@ -90,4 +107,5 @@ public class SecurityConfig {
     private String escapeJson(String value) {
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
+    
 }
