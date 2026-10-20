@@ -49,7 +49,7 @@ public class InquiryService {
     @Transactional
     public InquiryResponse markRead(Long ownerId, Long inquiryId, boolean read) {
         if (!read) {
-            throw new ArgumentInvalidException("read: false is not supported");
+            throw new ArgumentInvalidException("Solo se puede marcar como leída");
         }
 
         Inquiry inquiry = requireOwnedInquiry(inquiryId, ownerId);
@@ -73,7 +73,7 @@ public class InquiryService {
 
     private void requireOwnedProperty(Long propertyId, Long ownerId) {
         if (!propertyRepository.existsByIdAndOwner_IdAndDeletedAtIsNull(propertyId, ownerId)) {
-            throw new RecursoNoEncontradoException("Property not found");
+            throw new RecursoNoEncontradoException("Aviso no encontrado");
         }
     }
 

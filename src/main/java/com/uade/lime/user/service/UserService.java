@@ -42,13 +42,13 @@ public class UserService {
 
         if (request.newPassword() != null) {
             if (request.currentPassword() == null || request.currentPassword().isBlank()) {
-                throw new ArgumentInvalidException("currentPassword is required when newPassword is provided");
+                throw new ArgumentInvalidException("Ingresá tu contraseña actual para cambiarla");
             }
             if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-                throw new ProhibidoException("currentPassword is incorrect");
+                throw new ProhibidoException("La contraseña actual no es correcta");
             }
             if (exceedsBcryptByteLimit(request.newPassword())) {
-                throw new ArgumentInvalidException("password must be at most 72 bytes when UTF-8 encoded");
+                throw new ArgumentInvalidException("La contraseña no puede superar los 72 bytes");
             }
             user.changePassword(passwordEncoder.encode(request.newPassword()), Instant.now());
         }
@@ -59,7 +59,7 @@ public class UserService {
 
     private User findUser(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("User not found"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
     }
 
     private boolean hasUpdates(UpdateMeRequest request) {

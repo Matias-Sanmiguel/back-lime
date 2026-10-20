@@ -84,7 +84,7 @@ public class PropertyService {
         requireOwner(property, user.id());
 
         PropertyImage image = imageRepository.findByIdAndPropertyId(imageId, propertyId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Image not found"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Foto no encontrada"));
 
         String filename = image.getUrl().substring(image.getUrl().lastIndexOf('/') + 1);
         fileStorageService.delete(filename);
@@ -97,7 +97,7 @@ public class PropertyService {
         requireOwner(property, user.id());
 
         PropertyImage image = imageRepository.findByIdAndPropertyId(imageId, propertyId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Image not found"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Foto no encontrada"));
 
         String oldFilename = image.getUrl().substring(image.getUrl().lastIndexOf('/') + 1);
         String newFilename = fileStorageService.store(file);
@@ -154,7 +154,7 @@ public class PropertyService {
         Property property = findActive(id);
         boolean isOwner = user != null && property.getOwnerId().equals(user.id());
         if (property.getStatus() != PropertyStatus.PUBLISHED && !isOwner) {
-            throw new RecursoNoEncontradoException("Property not found");
+            throw new RecursoNoEncontradoException("Aviso no encontrado");
         }
         OwnerResponse owner = userRepository.findById(property.getOwnerId())
                 .map(OwnerResponse::from)
@@ -183,7 +183,7 @@ public class PropertyService {
 
     private void validatePriceRange(PropertySearchCriteria criteria) {
         if (criteria.hasInvalidPriceRange()) {
-            throw new ArgumentInvalidException("minPrice cannot be greater than maxPrice");
+            throw new ArgumentInvalidException("El precio mínimo no puede superar al máximo");
         }
     }
 
@@ -272,7 +272,7 @@ public class PropertyService {
         Property property = findActive(propertyId);
 
         if (property.getStatus() != PropertyStatus.PUBLISHED) {
-            throw new ConflictoException("Property is not published, cannot receive inquiries");
+            throw new ConflictoException("El aviso no está publicado: no puede recibir consultas");
         }
         Inquiry inquiry = Inquiry.create(
                 property,
@@ -286,7 +286,7 @@ public class PropertyService {
     }
     private Property findActive(Long id) {
         return repository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Property not found"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Aviso no encontrado"));
     }
 
     private String normalizeCurrency(String currency) {
@@ -299,7 +299,9 @@ public class PropertyService {
         requireOwner(property, user.id());
         PropertyStatus current = property.getStatus();
         if (current != PropertyStatus.DRAFT && current != PropertyStatus.PAUSED) {
-            throw new ConflictoException("Cannot publish a property in status " + current);
+            throw new ConflictoException(current == PropertyStatus.PUBLISHED
+                    ? "El aviso ya está publicado"
+                    : "Este aviso no se puede publicar en su estado actual");
         }
         try {
             property.publish(Instant.now());
@@ -314,7 +316,7 @@ public class PropertyService {
         Property property = findActive(id);
         requireOwner(property, user.id());
         if (property.getStatus() != PropertyStatus.PUBLISHED) {
-            throw new ConflictoException("Cannot pause a property in status " + property.getStatus());
+            throw new ConflictoException("Solo podés pausar un aviso publicado");
         }
         property.pause(Instant.now());
         return PropertyResponse.from(property, ownerResponseOf(user));
@@ -322,13 +324,13 @@ public class PropertyService {
 
     private void requireOwner(Property property, Long userId) {
         if (!property.getOwnerId().equals(userId)) {
-            throw new ProhibidoException("You are not the owner of this property");
+            throw new ProhibidoException("Este aviso pertenece a otra cuenta");
         }
     }
 
     private User ownerEntityOf(UserPrincipal owner) {
         return userRepository.findById(owner.id())
-                .orElseThrow(() -> new NoAutorizadoException("Authenticated user not found"));
+                .orElseThrow(() -> new NoAutorizadoException("Tu sesión ya no es válida, iniciá sesión de nuevo"));
     }
 
     private OwnerResponse ownerResponseOf(UserPrincipal user) {
@@ -356,7 +358,7 @@ public class PropertyService {
         Property property = findActive(propertyId);
         boolean isOwner = user != null && property.getOwnerId().equals(user.id());
         if (property.getStatus() != PropertyStatus.PUBLISHED && !isOwner) {
-            throw new RecursoNoEncontradoException("Property not found");
+            throw new RecursoNoEncontradoException("Aviso no encontrado");
         }
 
         return imageRepository.findByPropertyIdOrderByCreatedAtAsc(propertyId).stream()
