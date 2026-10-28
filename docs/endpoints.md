@@ -197,6 +197,8 @@ Solo **`PUBLISHED`** (aunque mandes `status`). Queries: `page`, `size`, `city`, 
 
 **200** `PageResponse<PropertyResponse>` · **400** `minPrice > maxPrice`
 
+Cada propiedad del listado público incluye `coverImage`: un `ImageResponse` (`id`, `url`, `createdAt`, `updatedAt`) o `null` si no tiene imágenes. Se selecciona la imagen más antigua por `createdAt`, con desempate por `id` ascendente; las portadas de la página se consultan juntas. En las demás respuestas `PropertyResponse`, `coverImage` es `null`; las imágenes completas se obtienen desde `GET /properties/{id}/images`.
+
 ```bash
 curl "http://localhost:8080/api/v1/properties?city=CABA&province=Buenos%20Aires&minBedrooms=2&operation=SALE"
 ```

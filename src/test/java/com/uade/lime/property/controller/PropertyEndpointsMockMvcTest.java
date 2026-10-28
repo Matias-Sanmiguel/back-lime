@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,6 +38,7 @@ import com.uade.lime.auth.repository.UserRepository;
 import com.uade.lime.auth.security.JwtService;
 import com.uade.lime.property.model.OperationType;
 import com.uade.lime.property.model.Property;
+import com.uade.lime.property.model.PropertyImage;
 import com.uade.lime.property.model.PropertyType;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyImageRepository;
@@ -186,6 +188,40 @@ class PropertyEndpointsMockMvcTest {
                         .param("minPrice", "100").param("maxPrice", "100"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements", is(2)));
+    }
+
+    @Test
+    void getProperties_returnsOnlyFirstCoverPerPropertyAndNullForMissingImages() throws Exception {
+        Property withoutImage = savePublishedPrice("Without image", "USD", 100);
+        Property withImage = savePublishedPrice("With image", "USD", 200);
+        Property nextPage = savePublishedPrice("Next page", "USD", 300);
+        Instant oldest = Instant.parse("2026-01-01T00:00:00Z");
+        propertyImageRepository.save(PropertyImage.of(withImage, "/uploads/newer.jpg", oldest.plusSeconds(1)));
+        PropertyImage cover = propertyImageRepository.save(PropertyImage.of(withImage, "/uploads/cover.jpg", oldest));
+        propertyImageRepository.save(PropertyImage.of(withImage, "/uploads/tied.jpg", oldest));
+        PropertyImage nextCover = propertyImageRepository.save(PropertyImage.of(nextPage, "/uploads/next.jpg", oldest));
+
+        assertThat(propertyImageRepository.findCoverImages(java.util.List.of(withoutImage.getId(), withImage.getId())))
+                .extracting(PropertyImage::getId).containsExactly(cover.getId());
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("sort", "price_asc").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements", is(3)))
+                .andExpect(jsonPath("$.content[0].id", is(withoutImage.getId().intValue())))
+                .andExpect(jsonPath("$.content[0].coverImage", nullValue()))
+                .andExpect(jsonPath("$.content[1].coverImage.id", is(cover.getId().intValue())))
+                .andExpect(jsonPath("$.content[1].coverImage.url", is("/uploads/cover.jpg")))
+                .andExpect(jsonPath("$.content[1].coverImage.createdAt", notNullValue()))
+                .andExpect(jsonPath("$.content[1].coverImage.updatedAt", notNullValue()));
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("sort", "price_asc").param("size", "2").param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].coverImage.id", is(nextCover.getId().intValue())));
+        mockMvc.perform(get("/api/v1/properties").param("page", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(0)));
     }
 
     @Test

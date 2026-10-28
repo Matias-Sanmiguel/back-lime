@@ -126,8 +126,13 @@ public class PropertyService {
                 .findAllById(propertyPage.getContent().stream().map(Property::getOwnerId).distinct().toList())
                 .stream()
                 .collect(Collectors.toMap(User::getId, OwnerResponse::from));
+        Map<Long, ImageResponse> coversByPropertyId = propertyPage.isEmpty() ? Map.of() : imageRepository
+                .findCoverImages(propertyPage.getContent().stream().map(Property::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(image -> image.getProperty().getId(), ImageResponse::from));
         Page<PropertyResponse> result = propertyPage
-                .map(property -> PropertyResponse.from(property, ownersById.get(property.getOwnerId())));
+                .map(property -> PropertyResponse.from(property, ownersById.get(property.getOwnerId()),
+                        coversByPropertyId.get(property.getId())));
         return PageResponse.from(result);
     }
     @Transactional
