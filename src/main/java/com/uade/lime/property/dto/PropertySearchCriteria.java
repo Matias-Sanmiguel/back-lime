@@ -17,7 +17,9 @@ public record PropertySearchCriteria(
         BigDecimal maxPrice,
         String province,
         Integer minBedrooms,
-        Integer minBathrooms) {
+        Integer minBathrooms,
+        String currency,
+        String sort) {
 
     public boolean hasInvalidPriceRange() {
         return minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0;

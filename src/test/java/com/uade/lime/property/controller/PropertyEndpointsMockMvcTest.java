@@ -121,12 +121,71 @@ class PropertyEndpointsMockMvcTest {
                         .param("type", "HOUSE")
                         .param("operation", "SALE")
                         .param("minPrice", "100000")
+                        .param("currency", "USD")
                         .param("maxPrice", "200000")
                         .param("minBedrooms", "2")
                         .param("minBathrooms", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].id", is(matching.getId().intValue())));
+    }
+
+    @Test
+    void getProperties_withInvalidCurrencyOrSort_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/properties").param("currency", "EUR"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("currency", "usd"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("sort", "oldest"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("minPrice", "1"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("maxPrice", "100"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("sort", "price_asc"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("sort", "price_desc"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("minPrice", "100").param("maxPrice", "1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getProperties_filtersCurrencyAndSortsBeforePaginationWithStableTies() throws Exception {
+        Property expensive = savePublishedPrice("Expensive", "USD", 300);
+        Property cheap = savePublishedPrice("Cheap", "USD", 100);
+        Property tied = savePublishedPrice("Tied", "USD", 100);
+        Property pesos = savePublishedPrice("Pesos", "ARS", 50);
+
+        mockMvc.perform(get("/api/v1/properties"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(4)))
+                .andExpect(jsonPath("$.content[0].id", is(pesos.getId().intValue())));
+        mockMvc.perform(get("/api/v1/properties").param("currency", "ARS"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id", is(pesos.getId().intValue())));
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("sort", "price_asc").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(3)))
+                .andExpect(jsonPath("$.totalPages", is(2)))
+                .andExpect(jsonPath("$.content[0].id", is(tied.getId().intValue())))
+                .andExpect(jsonPath("$.content[1].id", is(cheap.getId().intValue())));
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("sort", "price_asc").param("size", "2").param("page", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].id", is(expensive.getId().intValue())));
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("sort", "price_desc").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id", is(expensive.getId().intValue())));
+        mockMvc.perform(get("/api/v1/properties").param("currency", "USD")
+                        .param("minPrice", "100").param("maxPrice", "100"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", is(2)));
     }
 
     @Test
@@ -350,6 +409,15 @@ class PropertyEndpointsMockMvcTest {
         mockMvc.perform(delete("/api/v1/properties/{id}", 99_999L)
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(owner)))
                 .andExpect(status().isNotFound());
+    }
+
+    private Property savePublishedPrice(String title, String currency, int price) {
+        Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
+        Property property = Property.draft(title, "Descripcion", PropertyType.HOUSE, OperationType.SALE,
+                BigDecimal.valueOf(price), currency, "Calle 1", "Rosario", "Santa Fe", 2, 1,
+                BigDecimal.valueOf(70), BigDecimal.valueOf(80), owner, createdAt);
+        property.publish(createdAt);
+        return propertyRepository.save(property);
     }
 
     private String bearerToken(User user) {

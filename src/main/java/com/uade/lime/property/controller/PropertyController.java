@@ -37,6 +37,7 @@ import com.uade.lime.property.service.PropertyService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.PositiveOrZero;
 
 @RestController
@@ -62,9 +63,12 @@ public class PropertyController {
             @RequestParam(required = false) @PositiveOrZero BigDecimal maxPrice,
             @RequestParam(required = false) String province,
             @RequestParam(required = false) @PositiveOrZero Integer minBedrooms,
-            @RequestParam(required = false) @PositiveOrZero Integer minBathrooms) {
+            @RequestParam(required = false) @PositiveOrZero Integer minBathrooms,
+            @RequestParam(required = false) @Pattern(regexp = "ARS|USD") String currency,
+            @RequestParam(defaultValue = "newest") @Pattern(regexp = "newest|price_asc|price_desc") String sort) {
         PropertySearchCriteria criteria = new PropertySearchCriteria(
-                page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms);
+                page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms,
+                currency, sort);
         return ResponseEntity.ok(service.list(criteria));
     }
 

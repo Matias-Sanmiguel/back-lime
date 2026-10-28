@@ -57,7 +57,8 @@ public class MeController {
             @RequestParam(required = false) @PositiveOrZero Integer minBedrooms,
             @RequestParam(required = false) @PositiveOrZero Integer minBathrooms) {
         PropertySearchCriteria criteria = new PropertySearchCriteria(
-                page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms);
+                page, size, city, type, operation, status, minPrice, maxPrice, province, minBedrooms, minBathrooms,
+                null, "newest");
         return ResponseEntity.ok(propertyService.listMine(user, criteria));
     }
 

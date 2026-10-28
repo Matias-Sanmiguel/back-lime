@@ -112,6 +112,10 @@ public class PropertyService {
        @Transactional(readOnly = true)
     public PageResponse<PropertyResponse> list(PropertySearchCriteria criteria) {
         validatePriceRange(criteria);
+        if (criteria.currency() == null && (criteria.minPrice() != null || criteria.maxPrice() != null
+                || !"newest".equals(criteria.sort()))) {
+            throw new ArgumentInvalidException("currency is required for price filters or price sorting");
+        }
 
         // Public listing only shows published ads (Lucas #15).
         Specification<Property> filters = buildFilters(criteria, (root, builder) -> List.of(
@@ -188,7 +192,12 @@ public class PropertyService {
     }
 
     private PageRequest pageRequestOf(PropertySearchCriteria criteria) {
-        return PageRequest.of(criteria.page(), criteria.size(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Sort sort = switch (criteria.sort()) {
+            case "price_asc" -> Sort.by(Sort.Direction.ASC, "price");
+            case "price_desc" -> Sort.by(Sort.Direction.DESC, "price");
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
+        return PageRequest.of(criteria.page(), criteria.size(), sort.and(Sort.by(Sort.Direction.DESC, "id")));
     }
 
     private Specification<Property> buildFilters(
@@ -206,6 +215,9 @@ public class PropertyService {
             }
             if (criteria.operation() != null) {
                 predicates.add(builder.equal(root.get("operation"), criteria.operation()));
+            }
+            if (criteria.currency() != null) {
+                predicates.add(builder.equal(root.get("currency"), criteria.currency()));
             }
             if (criteria.minPrice() != null) {
                 predicates.add(builder.greaterThanOrEqualTo(root.get("price"), criteria.minPrice()));

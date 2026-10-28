@@ -191,7 +191,9 @@ Paginado. Filtros opcionales: `city`, `province`, `type`, `operation`, `status`,
 
 ### `GET /api/v1/properties` · público
 
-Solo **`PUBLISHED`** (aunque mandes `status`). Queries: `page`, `size`, `city`, `province`, `type`, `operation`, `minPrice`, `maxPrice`, `minBedrooms`, `minBathrooms`.
+Solo **`PUBLISHED`** (aunque mandes `status`). Queries: `page`, `size`, `city`, `province`, `type`, `operation`, `currency`, `sort`, `minPrice`, `maxPrice`, `minBedrooms`, `minBathrooms`.
+
+`currency` es opcional y acepta exactamente `ARS` o `USD`. Sin filtros de precio ni moneda, incluye ambas monedas. `sort` acepta `newest` (predeterminado), `price_asc` o `price_desc`; se ordena antes de paginar y los empates se resuelven por `id` descendente. Los filtros `minPrice`/`maxPrice` y el orden por precio requieren `currency`; no se convierten ni comparan monedas distintas. Valores inválidos o falta de moneda en estas consultas devuelven **400**.
 
 **200** `PageResponse<PropertyResponse>` · **400** `minPrice > maxPrice`
 
