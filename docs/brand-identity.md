@@ -1,6 +1,6 @@
 # Lime — Identidad de marca
 
-Fuente de verdad visual del producto. Dirección: **Editorial Lime**.
+Referencia histórica: **Editorial Lime**. La identidad vigente del frontend está documentada en `front-lime/DESIGN.md`, junto con sus tokens y componentes minimalistas. Este documento conserva la propuesta anterior, no dirige el rediseño actual.
 
 No implementar pantallas de marketplace desde este documento; la preview de marca es el único artefacto de UI permitido acá.
 
