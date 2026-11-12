@@ -15,7 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -32,8 +32,8 @@ public class Carrito {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "usuario_id", nullable = false, unique = true)
     private User usuario;
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
@@ -49,10 +49,9 @@ public class Carrito {
         return carrito;
     }
 
-    public void addItem(Property propiedad, int cantidad) {
-        if (cantidad <= 0) {
-            throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
-        }
-        items.add(CarritoItem.create(this, propiedad, cantidad));
+    public CarritoItem addItem(Property propiedad, Instant addedAt) {
+        CarritoItem item = CarritoItem.create(this, propiedad, addedAt);
+        items.add(item);
+        return item;
     }
 }

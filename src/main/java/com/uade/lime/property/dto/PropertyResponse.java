@@ -26,13 +26,18 @@ public record PropertyResponse(
         PropertyStatus status,
         OwnerResponse owner,
         Instant createdAt,
-        Instant updatedAt) {
+        Instant updatedAt,
+        ImageResponse coverImage) {
 
     public static PropertyResponse from(Property property) {
         return from(property, null);
     }
 
     public static PropertyResponse from(Property property, OwnerResponse owner) {
+        return from(property, owner, null);
+    }
+
+    public static PropertyResponse from(Property property, OwnerResponse owner, ImageResponse coverImage) {
         return new PropertyResponse(
                 property.getId(),
                 property.getTitle(),
@@ -51,6 +56,7 @@ public record PropertyResponse(
                 property.getStatus(),
                 owner,
                 property.getCreatedAt(),
-                property.getUpdatedAt());
+                property.getUpdatedAt(),
+                coverImage);
     }
 }

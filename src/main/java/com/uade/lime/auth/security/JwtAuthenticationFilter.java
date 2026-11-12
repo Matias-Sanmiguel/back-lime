@@ -1,11 +1,9 @@
 package com.uade.lime.auth.security;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -57,7 +55,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 claims.get("agencyName", String.class),
                 claims.getId(),
                 claims.getExpiration().toInstant());
-        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + principal.role()));
-        return UsernamePasswordAuthenticationToken.authenticated(principal, null, authorities);
+
+        return UsernamePasswordAuthenticationToken.authenticated(principal, null, principal.getAuthorities());
     }
 }

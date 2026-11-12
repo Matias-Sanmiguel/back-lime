@@ -1,6 +1,5 @@
 package com.uade.lime.carrito.controller;
 
-import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
@@ -14,14 +13,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.uade.lime.auth.security.UserPrincipal;
-import com.uade.lime.carrito.dto.AddCarritoRequest;
-import com.uade.lime.carrito.dto.CarritoResponse;
+import com.uade.lime.carrito.dto.AddCartItemRequest;
+import com.uade.lime.carrito.dto.CarritoItemResponse;
 import com.uade.lime.carrito.service.CarritoService;
 
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/carritos")
+@RequestMapping("/api/v1/me/cart/items")
 public class CarritoController {
 
     private final CarritoService carritoService;
@@ -31,30 +30,23 @@ public class CarritoController {
     }
 
     @GetMapping
-    public List<CarritoResponse> getAll(@AuthenticationPrincipal UserPrincipal user) {
+    public List<CarritoItemResponse> getAll(@AuthenticationPrincipal UserPrincipal user) {
         return carritoService.getAll(user.id());
     }
 
-    @GetMapping("/{id}")
-    public CarritoResponse getById(
-            @PathVariable Long id,
-            @AuthenticationPrincipal UserPrincipal user) {
-        return carritoService.getById(id, user.id());
-    }
-
     @PostMapping
-    public ResponseEntity<CarritoResponse> add(
-            @Valid @RequestBody AddCarritoRequest request,
+    public ResponseEntity<CarritoItemResponse> add(
+            @Valid @RequestBody AddCartItemRequest request,
             @AuthenticationPrincipal UserPrincipal user) {
-        CarritoResponse created = carritoService.add(user.id(), request);
-        return ResponseEntity.created(URI.create("/api/v1/carritos/" + created.id())).body(created);
+        CarritoItemResponse created = carritoService.add(user.id(), request);
+        return ResponseEntity.status(201).body(created);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{itemId}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id,
+            @PathVariable Long itemId,
             @AuthenticationPrincipal UserPrincipal user) {
-        carritoService.delete(id, user.id());
+        carritoService.delete(itemId, user.id());
         return ResponseEntity.noContent().build();
     }
 }

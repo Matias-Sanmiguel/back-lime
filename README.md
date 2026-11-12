@@ -24,6 +24,12 @@ docker compose up --build
 # API: http://localhost:8080
 ```
 
+Datos de demostración (28 avisos con fotos; cuentas `lime@test.com` y `agencia@demo.com`, clave `12345678`):
+
+```bash
+python3 scripts/seed.py
+```
+
 Solo DB + API en host (JDK 21):
 
 ```bash

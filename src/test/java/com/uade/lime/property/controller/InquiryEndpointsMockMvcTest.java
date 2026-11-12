@@ -102,6 +102,36 @@ class InquiryEndpointsMockMvcTest {
     }
 
     @Test
+    void listInquiries_filteredByOwnProperty_returns200() throws Exception {
+        mockMvc.perform(get("/api/v1/me/inquiries")
+                        .param("propertyId", property.getId().toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id", is(inquiry.getId().intValue())))
+                .andExpect(jsonPath("$.totalElements", is(1)))
+                .andExpect(jsonPath("$.unreadCount", is(1)));
+    }
+
+    @Test
+    void listInquiries_filteredByPropertyOfDifferentUser_returns404() throws Exception {
+        mockMvc.perform(get("/api/v1/me/inquiries")
+                        .param("propertyId", property.getId().toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(differentUser)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void listInquiries_filteredByDeletedProperty_returns404() throws Exception {
+        property.delete(Instant.now());
+        propertyRepository.save(property);
+
+        mockMvc.perform(get("/api/v1/me/inquiries")
+                        .param("propertyId", property.getId().toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(owner)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void getInquiry_asAuthorizedUser_returns200() throws Exception {
         mockMvc.perform(get("/api/v1/me/inquiries/{id}", inquiry.getId())
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(owner)))

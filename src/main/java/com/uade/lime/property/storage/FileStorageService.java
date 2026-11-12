@@ -10,10 +10,10 @@ import java.util.UUID;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
+
+import com.uade.lime.common.exception.ArgumentInvalidException;
 
 @Component
 public class FileStorageService {
@@ -33,14 +33,13 @@ public class FileStorageService {
 
     public String store(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo esta vacio");
+            throw new ArgumentInvalidException("El archivo esta vacio");
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Tipo de archivo no permitido, solo se aceptan JPEG, PNG o WEBP");
+            throw new ArgumentInvalidException("Tipo de archivo no permitido, solo se aceptan JPEG, PNG o WEBP");
         }
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El archivo supera el tamano maximo permitido (5MB)");
+            throw new ArgumentInvalidException("El archivo supera el tamano maximo permitido (5MB)");
         }
 
         String extension = "";

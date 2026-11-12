@@ -18,6 +18,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -63,6 +64,28 @@ public class User {
     @OneToMany(mappedBy = "owner")
     private List<Property> properties = new ArrayList<>();
 
+    @Builder
+    private User(
+            String email,
+            String passwordHash,
+            String name,
+            UserRole role,
+            String agencyName,
+            LocalDate birthDate,
+            Sex sex,
+            Instant createdAt,
+            Instant updatedAt) {
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.name = name;
+        this.role = role;
+        this.agencyName = agencyName;
+        this.birthDate = birthDate;
+        this.sex = sex;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public static User register(
             String email,
             String passwordHash,
@@ -72,17 +95,17 @@ public class User {
             LocalDate birthDate,
             Sex sex,
             Instant now) {
-        User user = new User();
-        user.email = email;
-        user.passwordHash = passwordHash;
-        user.name = name;
-        user.role = role;
-        user.agencyName = agencyName;
-        user.birthDate = birthDate;
-        user.sex = sex;
-        user.createdAt = now;
-        user.updatedAt = now;
-        return user;
+        return User.builder()
+                .email(email)
+                .passwordHash(passwordHash)
+                .name(name)
+                .role(role)
+                .agencyName(agencyName)
+                .birthDate(birthDate)
+                .sex(sex)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
     }
 
     public void updateProfile(String name, String agencyName, Instant now) {

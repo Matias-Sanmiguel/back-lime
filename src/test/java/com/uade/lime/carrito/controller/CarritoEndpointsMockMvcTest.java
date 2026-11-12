@@ -26,7 +26,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uade.lime.auth.model.Sex;
 import com.uade.lime.auth.model.User;
 import com.uade.lime.auth.model.UserRole;
@@ -34,9 +33,11 @@ import com.uade.lime.auth.repository.DenylistedTokenRepository;
 import com.uade.lime.auth.repository.UserRepository;
 import com.uade.lime.auth.security.JwtService;
 import com.uade.lime.carrito.model.Carrito;
+import com.uade.lime.carrito.repository.CarritoItemRepository;
 import com.uade.lime.carrito.repository.CarritoRepository;
 import com.uade.lime.property.model.OperationType;
 import com.uade.lime.property.model.Property;
+import com.uade.lime.property.model.PropertyImage;
 import com.uade.lime.property.model.PropertyType;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyImageRepository;
@@ -45,6 +46,8 @@ import com.uade.lime.property.repository.PropertyRepository;
 @SpringBootTest
 @ActiveProfiles("test")
 class CarritoEndpointsMockMvcTest {
+
+    private static final String CART_ITEMS_PATH = "/api/v1/me/cart/items";
 
     private MockMvc mockMvc;
 
@@ -61,6 +64,9 @@ class CarritoEndpointsMockMvcTest {
     private CarritoRepository carritoRepository;
 
     @Autowired
+    private CarritoItemRepository carritoItemRepository;
+
+    @Autowired
     private PropertyRepository propertyRepository;
 
     @Autowired
@@ -75,7 +81,7 @@ class CarritoEndpointsMockMvcTest {
     private User usuario;
     private User otroUsuario;
     private Property propiedad;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private PropertyImage coverImage;
 
     @BeforeEach
     void setUp() {
@@ -98,7 +104,9 @@ class CarritoEndpointsMockMvcTest {
 
         usuario = userRepository.save(user("carrito"));
         otroUsuario = userRepository.save(user("otro"));
-        propiedad = propertyRepository.save(publishedProperty(usuario));
+        propiedad = propertyRepository.save(publishedProperty(usuario, "Departamento para carrito"));
+        coverImage = propertyImageRepository.save(
+                PropertyImage.of(propiedad, "/uploads/cover.jpg", Instant.now()));
     }
 
     @AfterEach
@@ -108,88 +116,113 @@ class CarritoEndpointsMockMvcTest {
     }
 
     @Test
-    void addAndGet_returnsCartWithPropertyAndQuantity() throws Exception {
-        String response = mockMvc.perform(post("/api/v1/carritos")
+    void addAndGet_returnsPropertyItemAndReusesUsersCart() throws Exception {
+        mockMvc.perform(post(CART_ITEMS_PATH)
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {
-                                  "items": [
-                                    {
-                                      "propiedadId": %d,
-                                      "cantidad": 2
-                                    }
-                                  ]
-                                }
+                                { "propertyId": %d }
                                 """.formatted(propiedad.getId())))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.usuarioId", is(usuario.getId().intValue())))
-                .andExpect(jsonPath("$.fechaCreacion").isNotEmpty())
-                .andExpect(jsonPath("$.items[0].propiedadId", is(propiedad.getId().intValue())))
-                .andExpect(jsonPath("$.items[0].propiedadTitulo", is("Departamento para carrito")))
-                .andExpect(jsonPath("$.items[0].cantidad", is(2)))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.addedAt").isNotEmpty())
+                .andExpect(jsonPath("$.property.id", is(propiedad.getId().intValue())))
+                .andExpect(jsonPath("$.property.title", is("Departamento para carrito")))
+                .andExpect(jsonPath("$.property.owner.id", is(usuario.getId().intValue())))
+                .andExpect(jsonPath("$.property.coverImage.id", is(coverImage.getId().intValue())))
+                .andExpect(jsonPath("$.property.coverImage.url", is("/uploads/cover.jpg")));
 
-        Long carritoId = objectMapper.readTree(response).get("id").asLong();
+        Property secondProperty = propertyRepository.save(publishedProperty(usuario, "Otra propiedad"));
+        mockMvc.perform(post(CART_ITEMS_PATH)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "propertyId": %d }
+                                """.formatted(secondProperty.getId())))
+                .andExpect(status().isCreated());
 
-        mockMvc.perform(get("/api/v1/carritos/{id}", carritoId)
+        assertThat(carritoRepository.findByUsuario_Id(usuario.getId())).isPresent();
+        mockMvc.perform(get(CART_ITEMS_PATH)
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(carritoId.intValue())))
-                .andExpect(jsonPath("$.items[0].cantidad", is(2)));
+                .andExpect(jsonPath("$.length()", is(2)));
     }
 
     @Test
-    void getAll_returnsOnlyCurrentUsersCarts() throws Exception {
-        createCart(usuario);
-        createCart(otroUsuario);
+    void getAll_returnsOnlyCurrentUsersItems() throws Exception {
+        createItem(usuario, propiedad);
+        createItem(otroUsuario, propiedad);
 
-        mockMvc.perform(get("/api/v1/carritos")
+        mockMvc.perform(get(CART_ITEMS_PATH)
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()", is(1)))
-                .andExpect(jsonPath("$[0].usuarioId", is(usuario.getId().intValue())));
+                .andExpect(jsonPath("$[0].property.id", is(propiedad.getId().intValue())));
     }
 
     @Test
-    void getByIdAndDelete_hideOtherUsersCart() throws Exception {
-        var carrito = createCart(usuario);
+    void add_duplicateProperty_returnsConflict() throws Exception {
+        createItem(usuario, propiedad);
 
-        mockMvc.perform(get("/api/v1/carritos/{id}", carrito.getId())
-                        .header(HttpHeaders.AUTHORIZATION, bearerToken(otroUsuario)))
-                .andExpect(status().isNotFound());
-
-        mockMvc.perform(delete("/api/v1/carritos/{id}", carrito.getId())
-                        .header(HttpHeaders.AUTHORIZATION, bearerToken(otroUsuario)))
-                .andExpect(status().isNotFound());
-
-        assertThat(carritoRepository.findById(carrito.getId())).isPresent();
-    }
-
-    @Test
-    void add_withNonPositiveQuantity_returnsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/v1/carritos")
+        mockMvc.perform(post(CART_ITEMS_PATH)
                         .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {
-                                  "items": [
-                                    {
-                                      "propiedadId": %d,
-                                      "cantidad": 0
-                                    }
-                                  ]
-                                }
+                                { "propertyId": %d }
                                 """.formatted(propiedad.getId())))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void add_unpublishedProperty_returnsConflict() throws Exception {
+        Property draft = propertyRepository.save(draftProperty(usuario));
+
+        mockMvc.perform(post(CART_ITEMS_PATH)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "propertyId": %d }
+                                """.formatted(draft.getId())))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void delete_itemOwnedByAnotherUser_returnsNotFound() throws Exception {
+        var item = createItem(otroUsuario, propiedad);
+
+        mockMvc.perform(delete(CART_ITEMS_PATH + "/{itemId}", item.getId())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario)))
+                .andExpect(status().isNotFound());
+
+        assertThat(carritoItemRepository.findById(item.getId())).isPresent();
+    }
+
+    @Test
+    void delete_ownedItem_returnsNoContent() throws Exception {
+        var item = createItem(usuario, propiedad);
+
+        mockMvc.perform(delete(CART_ITEMS_PATH + "/{itemId}", item.getId())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario)))
+                .andExpect(status().isNoContent());
+
+        assertThat(carritoItemRepository.findById(item.getId())).isEmpty();
+    }
+
+    @Test
+    void add_nonPositivePropertyId_returnsBadRequest() throws Exception {
+        mockMvc.perform(post(CART_ITEMS_PATH)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken(usuario))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                { "propertyId": 0 }
+                                """))
                 .andExpect(status().isBadRequest());
     }
 
-    private Carrito createCart(User owner) {
-        var carrito = Carrito.create(owner, Instant.now());
-        carrito.addItem(propiedad, 1);
-        return carritoRepository.saveAndFlush(carrito);
+    private com.uade.lime.carrito.model.CarritoItem createItem(User owner, Property property) {
+        Carrito carrito = carritoRepository.findByUsuario_Id(owner.getId())
+                .orElseGet(() -> carritoRepository.saveAndFlush(Carrito.create(owner, Instant.now())));
+        return carritoItemRepository.saveAndFlush(carrito.addItem(property, Instant.now()));
     }
 
     private String bearerToken(User user) {
@@ -208,9 +241,9 @@ class CarritoEndpointsMockMvcTest {
                 Instant.now());
     }
 
-    private Property publishedProperty(User owner) {
+    private Property publishedProperty(User owner, String title) {
         Property property = Property.draft(
-                "Departamento para carrito",
+                title,
                 "Descripcion",
                 PropertyType.APARTMENT,
                 OperationType.RENT,
@@ -227,5 +260,24 @@ class CarritoEndpointsMockMvcTest {
                 Instant.now());
         property.publish(Instant.now());
         return property;
+    }
+
+    private Property draftProperty(User owner) {
+        return Property.draft(
+                "Departamento borrador",
+                "Descripcion",
+                PropertyType.APARTMENT,
+                OperationType.RENT,
+                BigDecimal.valueOf(450000),
+                "ARS",
+                "Av. Siempre Viva 742",
+                "Buenos Aires",
+                "Buenos Aires",
+                2,
+                1,
+                BigDecimal.valueOf(55),
+                BigDecimal.valueOf(65),
+                owner,
+                Instant.now());
     }
 }

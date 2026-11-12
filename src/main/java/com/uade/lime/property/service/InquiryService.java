@@ -5,15 +5,15 @@ import java.time.Instant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import com.uade.lime.common.exception.ArgumentInvalidException;
+import com.uade.lime.common.exception.RecursoNoEncontradoException;
 import com.uade.lime.property.dto.InquiryInboxResponse;
 import com.uade.lime.property.dto.InquiryResponse;
+import com.uade.lime.property.dto.InquirySearchCriteria;
 import com.uade.lime.property.model.Inquiry;
-import com.uade.lime.property.model.Property;
 import com.uade.lime.property.repository.InquiryRepository;
 import com.uade.lime.property.repository.PropertyRepository;
 
@@ -29,13 +29,13 @@ public class InquiryService {
     }
 
     @Transactional(readOnly = true)
-    public InquiryInboxResponse listMine(Long ownerId, int page, int size, Long propertyId, boolean unreadOnly) {
-        if (propertyId != null) {
-            requireOwnedProperty(propertyId, ownerId);
+    public InquiryInboxResponse listMine(Long ownerId, InquirySearchCriteria criteria) {
+        if (criteria.propertyId() != null) {
+            requireOwnedProperty(criteria.propertyId(), ownerId);
         }
 
-        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<Inquiry> inquiries = findInboxPage(ownerId, propertyId, unreadOnly, pageable);
+        var pageable = PageRequest.of(criteria.page(), criteria.size(), Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Inquiry> inquiries = findInboxPage(ownerId, criteria.propertyId(), criteria.unreadOnly(), pageable);
         long unreadCount = inquiryRepository.countUnreadByPropertyOwnerId(ownerId);
 
         return InquiryInboxResponse.from(inquiries.map(InquiryResponse::from), unreadCount);
@@ -49,7 +49,7 @@ public class InquiryService {
     @Transactional
     public InquiryResponse markRead(Long ownerId, Long inquiryId, boolean read) {
         if (!read) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "read: false is not supported");
+            throw new ArgumentInvalidException("read: false is not supported");
         }
 
         Inquiry inquiry = requireOwnedInquiry(inquiryId, ownerId);
@@ -72,18 +72,16 @@ public class InquiryService {
     }
 
     private void requireOwnedProperty(Long propertyId, Long ownerId) {
-        Property property = propertyRepository.findByIdAndDeletedAtIsNull(propertyId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found"));
-        if (!ownerId.equals(property.getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Property not found");
+        if (!propertyRepository.existsByIdAndOwner_IdAndDeletedAtIsNull(propertyId, ownerId)) {
+            throw new RecursoNoEncontradoException("Property not found");
         }
     }
 
     private Inquiry requireOwnedInquiry(Long inquiryId, Long ownerId) {
         Inquiry inquiry = inquiryRepository.findByIdWithProperty(inquiryId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Consulta no encontrada"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Consulta no encontrada"));
         if (!ownerId.equals(inquiry.getProperty().getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Consulta no encontrada");
+            throw new RecursoNoEncontradoException("Consulta no encontrada");
         }
         return inquiry;
     }

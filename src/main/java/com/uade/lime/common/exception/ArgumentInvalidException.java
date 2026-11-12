@@ -1,4 +1,4 @@
-package com.uade.lime.common;
+package com.uade.lime.common.exception;
 
 public class ArgumentInvalidException extends RuntimeException {
 

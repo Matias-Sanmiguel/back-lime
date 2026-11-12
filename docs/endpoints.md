@@ -4,7 +4,7 @@ Base: `http://localhost:8080` · Prefijo: `/api/v1` · JSON · Errores: [RFC 945
 
 Auth: header `Authorization: Bearer <token>` cuando la fila dice JWT. El login/register devuelven el campo `token`.
 
-Actualizado: **11 nov 2026**. Contrato v1 en `main` (`back-lime`): **24 REST + `GET /uploads/**`**.
+Actualizado: **11 nov 2026**. Contrato v1 en `main` (`back-lime`): **23 REST + `GET /uploads/**`**.
 
 > **PATCH vs PUT:** la API usa `PATCH` para actualizaciones parciales (avisos, perfil, imágenes, marcar consulta). Justificación en el [README](../README.md).
 
@@ -34,10 +34,9 @@ Actualizado: **11 nov 2026**. Contrato v1 en `main` (`back-lime`): **24 REST + `
 | 18 | Hecho | `GET` | `/me/inquiries` | JWT | Página + `unreadCount`; query `unreadOnly`, `propertyId` |
 | 19 | Hecho | `GET` | `/me/inquiries/{inquiryId}` | JWT | Detalle · **404** si no es del dueño |
 | 20 | Hecho | `PATCH` | `/me/inquiries/{inquiryId}` | JWT | Body `{ "read": true }` · **400** si `false` |
-| 21 | Hecho | `GET` | `/carritos` | JWT | Todos los carritos del usuario autenticado |
-| 22 | Hecho | `GET` | `/carritos/{id}` | JWT | **404** si no existe o pertenece a otro usuario |
-| 23 | Hecho | `POST` | `/carritos` | JWT | Crea carrito con propiedades publicadas · **201** |
-| 24 | Hecho | `DELETE` | `/carritos/{id}` | JWT | Elimina carrito propio · **204** |
+| 21 | Hecho | `GET` | `/me/cart/items` | JWT | Ítems del carrito del usuario autenticado |
+| 22 | Hecho | `POST` | `/me/cart/items` | JWT | Agrega una propiedad publicada · **201** · **409** duplicada |
+| 23 | Hecho | `DELETE` | `/me/cart/items/{itemId}` | JWT | Elimina ítem propio · **204** · **404** ajeno o inexistente |
 | — | Hecho | `GET` | `/uploads/**` | Público | ResourceHandler (no es `@RestController`) |
 
 ### Capas
@@ -61,7 +60,7 @@ Carrito: `CarritoController` → `CarritoService`.
 | Panel | `GET /me/properties`, publish, pause, `DELETE /properties/{id}` |
 | Nuevo / editar aviso | `POST /properties`, `PATCH /properties/{id}`, images, publish |
 | Consultas | `GET /me/inquiries`, `GET .../{id}`, `PATCH .../{id}` |
-| Carrito | `GET /carritos`, `GET /carritos/{id}`, `POST /carritos`, `DELETE /carritos/{id}` |
+| Carrito | `GET /me/cart/items`, `POST /me/cart/items`, `DELETE /me/cart/items/{itemId}` |
 
 ### Fuera de v1
 
@@ -72,7 +71,7 @@ Refresh token, cambiar email, `PUT` de aviso, favoritos, mapa, chat, admin, pago
 ## Convenciones
 
 * Prefijo `/api/v1`. IDs `Long`. Fechas ISO-8601 UTC (`Instant`).
-* Listados: `PageResponse<T>` (o `InquiryInboxResponse` en inbox); los carritos propios ordenan `fechaCreacion DESC`.
+* Listados: `PageResponse<T>` (o `InquiryInboxResponse` en inbox); los ítems del carrito se ordenan por `addedAt DESC`.
 * Soft delete en avisos (`deletedAt`). Nunca hard delete de properties.
 * JSON: `Content-Type: application/json`. Fotos: `multipart/form-data` campo `file`.
 * JWT: campo respuesta `token`, `tokenType: Bearer`, `expiresIn: 86400` (HS256). Password: bcrypt.
@@ -91,11 +90,11 @@ Refresh token, cambiar email, `PUT` de aviso, favoritos, mapa, chat, admin, pago
 
 | Código | Cuándo |
 |--------|--------|
-| `400` | Validación, MIME inválido, publish incompleto, `read: false`, cantidad de ítem no positiva |
+| `400` | Validación, MIME inválido, publish incompleto, `read: false` |
 | `401` | Sin token, token inválido/denylist, login fallido |
 | `403` | Token OK pero no es el dueño |
-| `404` | No existe, soft-deleted, DRAFT oculto a visitante, consulta/carrito ajeno, propiedad no publicada en carrito |
-| `409` | Email repetido, inquiry sobre no-`PUBLISHED`, transición inválida |
+| `404` | No existe, soft-deleted, DRAFT oculto a visitante, consulta/carrito-item ajeno o inexistente, propiedad inexistente |
+| `409` | Email repetido, inquiry sobre no-`PUBLISHED`, propiedad del carrito no publicada o duplicada, transición inválida |
 
 ### Quién puede pegarle
 
@@ -135,9 +134,9 @@ Aviso + `owner` (`OwnerResponse`) + timestamps / `status`.
 
 `id`, `propertyId`, `propertyTitle`, `name`, `email`, `phone`, `message`, `readAt`, `createdAt`
 
-### CarritoResponse
+### CarritoItemResponse
 
-`id`, `usuarioId`, `fechaCreacion`, `items` (`propiedadId`, `propiedadTitulo`, `cantidad`)
+`id`, `property` (`PropertyResponse` completo, incluido `coverImage`), `addedAt`
 
 ### ImageResponse
 
@@ -176,7 +175,7 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 Roles en el token (`ROLE_USER` / `ROLE_AGENCY` / `ROLE_ADMIN`):
 
 * **Público:** buscar avisos, ficha publicada, register, login, mandar consulta, `/uploads`.
-* **Cualquier autenticado (`USER`, `AGENCY`, `ADMIN`):** `/me`, logout, inbox y carritos propios.
+* **Cualquier autenticado (`USER`, `AGENCY`, `ADMIN`):** `/me`, logout, inbox y sus ítems de carrito.
 * **`AGENCY` o `ADMIN`:** crear/editar/borrar/publicar/pausar avisos y fotos. Un `USER` logueado recibe **403**.
 * Además, el service chequea **dueño** (otro `AGENCY` no edita el aviso ajeno → **403**).
 
@@ -202,9 +201,13 @@ Paginado. Filtros opcionales: `city`, `province`, `type`, `operation`, `status`,
 
 ### `GET /api/v1/properties` · público
 
-Solo **`PUBLISHED`** (aunque mandes `status`). Queries: `page`, `size`, `city`, `province`, `type`, `operation`, `minPrice`, `maxPrice`, `minBedrooms`, `minBathrooms`.
+Solo **`PUBLISHED`** (aunque mandes `status`). Queries: `page`, `size`, `city`, `province`, `type`, `operation`, `currency`, `sort`, `minPrice`, `maxPrice`, `minBedrooms`, `minBathrooms`.
+
+`currency` es opcional y acepta exactamente `ARS` o `USD`. Sin filtros de precio ni moneda, incluye ambas monedas. `sort` acepta `newest` (predeterminado), `price_asc` o `price_desc`; se ordena antes de paginar y los empates se resuelven por `id` descendente. Los filtros `minPrice`/`maxPrice` y el orden por precio requieren `currency`; no se convierten ni comparan monedas distintas. Valores inválidos o falta de moneda en estas consultas devuelven **400**.
 
 **200** `PageResponse<PropertyResponse>` · **400** `minPrice > maxPrice`
+
+Cada propiedad del listado público incluye `coverImage`: un `ImageResponse` (`id`, `url`, `createdAt`, `updatedAt`) o `null` si no tiene imágenes. Se selecciona la imagen más antigua por `createdAt`, con desempate por `id` ascendente; las portadas se consultan en conjunto. Las respuestas `PropertyResponse` dentro de ítems del carrito también incluyen la portada; en otros endpoints se mantiene `null`. Las imágenes completas se obtienen desde `GET /properties/{id}/images`.
 
 ```bash
 curl "http://localhost:8080/api/v1/properties?city=CABA&province=Buenos%20Aires&minBedrooms=2&operation=SALE"
@@ -228,23 +231,23 @@ Requiere title, price, currency, city, type, operation. **200** `PUBLISHED` · *
 
 ## Carrito
 
-Todos los endpoints requieren JWT. Un usuario solo puede listar, consultar y eliminar sus carritos. El alta asocia automáticamente el usuario autenticado; cada ítem debe referenciar una propiedad publicada y tener `cantidad` positiva.
+Todos los endpoints requieren JWT. Cada usuario tiene un único carrito; sus ítems se devuelven directamente como una lista y solo pueden ser eliminados por su dueño. No se maneja cantidad: cada propiedad puede aparecer una sola vez. Solo se agregan propiedades publicadas.
 
-### `GET /api/v1/carritos` · JWT → **200** `CarritoResponse[]`
+### `GET /api/v1/me/cart/items` · JWT → **200** `CarritoItemResponse[]`
 
-### `GET /api/v1/carritos/{id}` · JWT → **200** · **404** si inexistente o ajeno
+Cada ítem: `{ "id": 7, "property": PropertyResponse, "addedAt": "..." }`. `property` contiene el `PropertyResponse` completo, incluida su portada.
 
-### `POST /api/v1/carritos` · JWT → **201** `CarritoResponse` + `Location`
+### `POST /api/v1/me/cart/items` · JWT → **201** `CarritoItemResponse`
 
 ```json
 {
-  "items": [
-    { "propiedadId": 1, "cantidad": 2 }
-  ]
+  "propertyId": 1
 }
 ```
 
-### `DELETE /api/v1/carritos/{id}` · JWT → **204** · **404** si inexistente o ajeno
+**409** si la propiedad no está publicada o ya existe en el carrito · **404** si no existe o fue eliminada.
+
+### `DELETE /api/v1/me/cart/items/{itemId}` · JWT → **204** · **404** si inexistente o ajeno
 
 ---
 
