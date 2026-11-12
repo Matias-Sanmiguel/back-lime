@@ -89,10 +89,10 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> writeProblemDetail(
                                 response, HttpStatus.UNAUTHORIZED,
-                                "Authentication is required to access this resource"))
+                                "Iniciá sesión para continuar"))
                         .accessDeniedHandler((request, response, accessDeniedException) -> writeProblemDetail(
                                 response, HttpStatus.FORBIDDEN,
-                                "You do not have permission to access this resource")))
+                                "No tenés permiso para realizar esta acción")))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -149,7 +149,7 @@ public class Property {
     private void requireComplete() {
         if (isBlank(title) || price == null || isBlank(currency) || isBlank(city) || type == null || operation == null) {
             throw new IllegalStateException(
-                    "Cannot publish: title, price, currency, city, type and operation are required");
+                    "Completá título, precio, moneda, ciudad, tipo y operación");
         }
     }
 

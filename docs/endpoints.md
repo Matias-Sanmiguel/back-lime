@@ -74,13 +74,13 @@ Refresh token, cambiar email, `PUT` de aviso, favoritos, mapa, chat, admin, pago
 
 ```json
 {
-  "type": "about:blank",
-  "title": "Bad Request",
   "status": 400,
-  "detail": "minPrice cannot be greater than maxPrice",
-  "instance": "/api/v1/properties"
+  "title": "Invalid argument",
+  "detail": "El precio mínimo no puede superar al máximo"
 }
 ```
+
+`detail` siempre está en español y está pensado para mostrarse tal cual al usuario (el front lo usa así). Los errores de validación (`@NotBlank`, `@Size`, ...) lo arman campo por campo, por ejemplo `email: no debe estar vacío; password: el tamaño debe estar entre 8 y 72`.
 
 | Código | Cuándo |
 |--------|--------|

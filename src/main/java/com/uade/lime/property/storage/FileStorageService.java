@@ -33,13 +33,13 @@ public class FileStorageService {
 
     public String store(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new ArgumentInvalidException("El archivo esta vacio");
+            throw new ArgumentInvalidException("El archivo está vacío");
         }
         if (!ALLOWED_CONTENT_TYPES.contains(file.getContentType())) {
-            throw new ArgumentInvalidException("Tipo de archivo no permitido, solo se aceptan JPEG, PNG o WEBP");
+            throw new ArgumentInvalidException("Tipo de archivo no permitido: solo se aceptan JPG, PNG o WEBP");
         }
         if (file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new ArgumentInvalidException("El archivo supera el tamano maximo permitido (5MB)");
+            throw new ArgumentInvalidException("El archivo supera el tamaño máximo permitido (5 MB)");
         }
 
         String extension = "";

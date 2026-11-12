@@ -28,7 +28,7 @@ import com.uade.lime.auth.security.UserPrincipal;
 @Service
 public class AuthService {
 
-    private static final String BAD_CREDENTIALS_MESSAGE = "Invalid email or password";
+    private static final String BAD_CREDENTIALS_MESSAGE = "Email o contraseña incorrectos";
     private static final int MAX_PASSWORD_BYTES = 72;
 
     private final UserRepository userRepository;
@@ -51,23 +51,23 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         UserRole role = request.role() != null ? request.role() : UserRole.USER;
         if (role == UserRole.ADMIN) {
-            throw new ArgumentInvalidException("Cannot register a user with role ADMIN");
+            throw new ArgumentInvalidException("No se puede crear una cuenta con rol ADMIN");
         }
         if (exceedsBcryptByteLimit(request.password())) {
-            throw new ArgumentInvalidException("password must be at most 72 bytes when UTF-8 encoded");
+            throw new ArgumentInvalidException("La contraseña no puede superar los 72 bytes");
         }
 
         String agencyName = null;
         if (role == UserRole.AGENCY) {
             if (request.agencyName() == null || request.agencyName().isBlank()) {
-                throw new ArgumentInvalidException("agencyName is required for role AGENCY");
+                throw new ArgumentInvalidException("Ingresá el nombre de la inmobiliaria");
             }
             agencyName = request.agencyName();
         }
 
         String email = normalizeEmail(request.email());
         if (userRepository.existsByEmail(email)) {
-            throw new ConflictoException("Email is already registered");
+            throw new ConflictoException("El email ya está registrado");
         }
 
         Instant now = Instant.now();
@@ -85,7 +85,7 @@ public class AuthService {
         try {
             user = userRepository.save(user);
         } catch (DataIntegrityViolationException ex) {
-            throw new ConflictoException("Email is already registered");
+            throw new ConflictoException("El email ya está registrado");
         }
 
         return issueAuthResponse(user);
