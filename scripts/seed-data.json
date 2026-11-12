@@ -1,0 +1,678 @@
+{
+  "users": [
+    {
+      "key": 1,
+      "email": "lime@test.com",
+      "password": "12345678",
+      "name": "Lime",
+      "role": "AGENCY",
+      "agencyName": "Lime Inmuebles",
+      "birthDate": "1990-05-14",
+      "sex": "OTHER"
+    },
+    {
+      "key": 2,
+      "email": "agencia@demo.com",
+      "password": "12345678",
+      "name": "Agencia Demo",
+      "role": "AGENCY",
+      "agencyName": "Agencia Demo",
+      "birthDate": "1985-09-02",
+      "sex": "OTHER"
+    }
+  ],
+  "properties": [
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Departamento de 3 ambientes en Palermo",
+        "description": "Luminoso departamento al frente con balcón, cocina integrada y seguridad 24hs.\n\nIdeal para estudiantes.",
+        "type": "APARTMENT",
+        "operation": "SALE",
+        "price": 120000,
+        "currency": "USD",
+        "address": "Thames 1500",
+        "city": "Palermo",
+        "province": "CABA",
+        "bedrooms": 3,
+        "bathrooms": 1,
+        "coveredArea": 70,
+        "totalArea": 75
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200",
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa con jardín en Martínez",
+        "description": "Casa de cuatro dormitorios sobre lote propio, con jardín y quincho.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 420000,
+        "currency": "USD",
+        "address": "Libertador 800",
+        "city": "Martínez",
+        "province": "Buenos Aires",
+        "bedrooms": 4,
+        "bathrooms": 3,
+        "coveredArea": 220,
+        "totalArea": 450
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PAUSED",
+      "request": {
+        "title": "Local en San Telmo (pausado)",
+        "description": "Planta libre sobre Defensa con vidriera a la calle.",
+        "type": "COMMERCIAL",
+        "operation": "RENT",
+        "price": 980000,
+        "currency": "ARS",
+        "address": "Defensa 900",
+        "city": "San Telmo",
+        "province": "CABA",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "coveredArea": 90,
+        "totalArea": 90
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Monoambiente temporario en Villa Gesell",
+        "description": "A dos cuadras del mar, ideal para la temporada.",
+        "type": "APARTMENT",
+        "operation": "TEMPORARY_RENT",
+        "price": 60000,
+        "currency": "ARS",
+        "address": "Av. 3 y Paseo 105",
+        "city": "Villa Gesell",
+        "province": "Buenos Aires",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "coveredArea": 30,
+        "totalArea": 30
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Lote en barrio cerrado Pilar",
+        "description": "Lote de 600 m² en barrio cerrado de Pilar, con entorno arbolado y acceso por calles internas. Ideal para proyectar una vivienda familiar con jardín y galería. La publicación es demostrativa; consultar condiciones de expensas y servicios.",
+        "type": "LAND",
+        "operation": "SALE",
+        "price": 85000,
+        "currency": "USD",
+        "address": "Los Álamos 100",
+        "city": "Pilar",
+        "province": "Buenos Aires",
+        "bedrooms": 0,
+        "bathrooms": 0,
+        "coveredArea": 0,
+        "totalArea": 600
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Dos ambientes en Caballito",
+        "description": "Departamento de dos ambientes en Caballito, con living comedor luminoso, cocina funcional, dormitorio independiente y baño completo. Buena opción para quienes buscan conectividad y servicios de cercanía.",
+        "type": "APARTMENT",
+        "operation": "RENT",
+        "price": 540000,
+        "currency": "ARS",
+        "address": "Av. Rivadavia 5200",
+        "city": "Caballito",
+        "province": "CABA",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "coveredArea": 45,
+        "totalArea": 50
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa en Adrogué con patio",
+        "description": "Casa de tres dormitorios en Adrogué, con patio privado, ambientes amplios, cocina comedor y dos baños. Una alternativa cómoda para familias que buscan espacio exterior y un entorno residencial.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 210000,
+        "currency": "USD",
+        "address": "Mitre 1200",
+        "city": "Adrogué",
+        "province": "Buenos Aires",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "coveredArea": 150,
+        "totalArea": 220
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Cabaña cerca del río",
+        "description": "Cabaña de dos dormitorios en Tigre, ideal para una escapada cerca del río. Dispone de estar comedor, cocina equipada y espacio exterior para disfrutar de la naturaleza. Consultar disponibilidad por fecha.",
+        "type": "HOUSE",
+        "operation": "TEMPORARY_RENT",
+        "price": 185000,
+        "currency": "ARS",
+        "address": "Camino de los Remeros 1500",
+        "city": "Tigre",
+        "province": "Buenos Aires",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "coveredArea": 70,
+        "totalArea": 110
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Monoambiente luminoso en Villa Gesell",
+        "description": "Monoambiente luminoso para alquiler temporario en Villa Gesell, con cocina integrada, baño completo y espacio de descanso. Una opción práctica para vacaciones cerca de comercios y la costa.",
+        "type": "APARTMENT",
+        "operation": "TEMPORARY_RENT",
+        "price": 65000,
+        "currency": "ARS",
+        "address": "Av. 3 1100",
+        "city": "Villa Gesell",
+        "province": "Buenos Aires",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "coveredArea": 32,
+        "totalArea": 36
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Oficina en el centro",
+        "description": "Oficina comercial de 60 m² en Córdoba Capital, con ambiente principal luminoso, espacio adaptable para recepción o puestos de trabajo y baño privado. Ideal para estudios profesionales o pequeñas empresas. Ubicación con acceso a transporte y servicios.",
+        "type": "COMMERCIAL",
+        "operation": "RENT",
+        "price": 420000,
+        "currency": "ARS",
+        "address": "Av. Colón 500",
+        "city": "Córdoba",
+        "province": "Córdoba",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "coveredArea": 60,
+        "totalArea": 60
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Departamento de 4 ambientes con balcón aterrazado en Belgrano",
+        "description": "Piso alto con vista abierta, living comedor de 30 m² y cocina independiente con lavadero.\n\nA dos cuadras del subte D y de la avenida Cabildo.",
+        "type": "APARTMENT",
+        "operation": "SALE",
+        "price": 185000,
+        "currency": "USD",
+        "address": "Av. Cabildo 2350",
+        "city": "Belgrano",
+        "province": "CABA",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "coveredArea": 95,
+        "totalArea": 104
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=1200",
+        "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200",
+        "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200",
+        "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Semipiso de 3 ambientes en Recoleta",
+        "description": "Edificio clásico con portería. Ambientes amplios, pisos de roble y mucha luz natural.\n\nExpensas moderadas. Contrato por 24 meses.",
+        "type": "APARTMENT",
+        "operation": "RENT",
+        "price": 780000,
+        "currency": "ARS",
+        "address": "Arenales 1840",
+        "city": "Recoleta",
+        "province": "CABA",
+        "bedrooms": 2,
+        "bathrooms": 2,
+        "coveredArea": 88,
+        "totalArea": 88
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1515263487990-61b07816b324?w=1200",
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200",
+        "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=1200",
+        "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa moderna con pileta sobre la laguna en Nordelta",
+        "description": "Diseño contemporáneo en dos plantas, galería con parrilla y pileta climatizada con salida a la laguna.\n\nSeguridad 24 horas y acceso rápido a Panamericana.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 650000,
+        "currency": "USD",
+        "address": "Barrio Los Lagos, lote 214",
+        "city": "Nordelta",
+        "province": "Buenos Aires",
+        "bedrooms": 4,
+        "bathrooms": 4,
+        "coveredArea": 320,
+        "totalArea": 800
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=1200",
+        "https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=1200",
+        "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200",
+        "https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Dos ambientes a estrenar en Almagro",
+        "description": "Unidad al contrafrente, muy silenciosa, con balcón y cocina integrada.\n\nApto crédito. Amenities: terraza con parrilla y laundry.",
+        "type": "APARTMENT",
+        "operation": "SALE",
+        "price": 98000,
+        "currency": "USD",
+        "address": "Medrano 940",
+        "city": "Almagro",
+        "province": "CABA",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "coveredArea": 45,
+        "totalArea": 48
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200",
+        "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=1200",
+        "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa familiar con jardín en San Isidro",
+        "description": "Casa estilo americano con porche, jardín parquizado y cochera para dos autos.\n\nCerca de colegios y del centro de San Isidro.",
+        "type": "HOUSE",
+        "operation": "RENT",
+        "price": 1450000,
+        "currency": "ARS",
+        "address": "Roque Sáenz Peña 1120",
+        "city": "San Isidro",
+        "province": "Buenos Aires",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "coveredArea": 210,
+        "totalArea": 450
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=1200",
+        "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=1200",
+        "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Oficina corporativa en torre con amenities",
+        "description": "Planta libre con piso técnico, dos baños y office. Dos cocheras incluidas.\n\nTorre con seguridad, auditorio y SUM.",
+        "type": "COMMERCIAL",
+        "operation": "SALE",
+        "price": 340000,
+        "currency": "USD",
+        "address": "Av. Corrientes 330, piso 14",
+        "city": "San Nicolás",
+        "province": "CABA",
+        "bedrooms": 0,
+        "bathrooms": 2,
+        "coveredArea": 180,
+        "totalArea": 180
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200",
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Departamento frente al mar por temporada",
+        "description": "Vista directa a la playa Varese, balcón corrido y ropa de cama incluida.\n\nPrecio por noche, estadía mínima de tres noches.",
+        "type": "APARTMENT",
+        "operation": "TEMPORARY_RENT",
+        "price": 95000,
+        "currency": "ARS",
+        "address": "Bv. Marítimo 2900",
+        "city": "Mar del Plata",
+        "province": "Buenos Aires",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "coveredArea": 60,
+        "totalArea": 65
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=1200",
+        "https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=1200",
+        "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa en barrio cerrado en Funes",
+        "description": "Casa de una planta con galería, parrilla y amplio parque. Calefacción por losa radiante.\n\nA 15 minutos del centro de Rosario.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 295000,
+        "currency": "USD",
+        "address": "Barrio Kentucky, lote 58",
+        "city": "Funes",
+        "province": "Santa Fe",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "coveredArea": 180,
+        "totalArea": 600
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1494526585095-c41746248156?w=1200",
+        "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=1200",
+        "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=1200",
+        "https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Lote de 1.200 m² en zona de chacras",
+        "description": "Terreno llano con frente de 30 metros, luz y agua de red disponibles.\n\nIdeal para casa de fin de semana.",
+        "type": "LAND",
+        "operation": "SALE",
+        "price": 62000,
+        "currency": "USD",
+        "address": "Ruta 3, km 68",
+        "city": "Cañuelas",
+        "province": "Buenos Aires",
+        "bedrooms": 0,
+        "bathrooms": 0,
+        "coveredArea": 0,
+        "totalArea": 1200
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1500076656116-558758c991c1?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Tres ambientes con amenities en Nueva Córdoba",
+        "description": "Edificio nuevo con pileta, gimnasio y cowork. Cerca de la Ciudad Universitaria y del Parque Sarmiento.",
+        "type": "APARTMENT",
+        "operation": "RENT",
+        "price": 620000,
+        "currency": "ARS",
+        "address": "Bv. Illia 450",
+        "city": "Nueva Córdoba",
+        "province": "Córdoba",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "coveredArea": 70,
+        "totalArea": 74
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1515263487990-61b07816b324?w=1200",
+        "https://images.unsplash.com/photo-1632829882891-5047ccc421bc?w=1200",
+        "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa de diseño con pileta en country de Pilar",
+        "description": "Arquitectura de autor con grandes ventanales, doble altura y pileta infinita.\n\nSuite principal con vestidor y escritorio con vista al golf.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 1250000,
+        "currency": "USD",
+        "address": "Country Martindale, lote 9",
+        "city": "Pilar",
+        "province": "Buenos Aires",
+        "bedrooms": 5,
+        "bathrooms": 5,
+        "coveredArea": 480,
+        "totalArea": 1500
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200",
+        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200",
+        "https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=1200",
+        "https://images.unsplash.com/photo-1600573472550-8090b5e0745e?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Local a la calle en Palermo Soho",
+        "description": "Local con vidriera de 8 metros, depósito y baño. Zona de alto tránsito peatonal.",
+        "type": "COMMERCIAL",
+        "operation": "RENT",
+        "price": 1250000,
+        "currency": "ARS",
+        "address": "Honduras 4800",
+        "city": "Palermo",
+        "province": "CABA",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "coveredArea": 95,
+        "totalArea": 110
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Tres ambientes con patio en Villa Crespo",
+        "description": "PH reciclado con patio propio y entrepiso. Sin expensas.\n\nA pasos del Parque Centenario.",
+        "type": "APARTMENT",
+        "operation": "SALE",
+        "price": 145000,
+        "currency": "USD",
+        "address": "Thames 380",
+        "city": "Villa Crespo",
+        "province": "CABA",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "coveredArea": 68,
+        "totalArea": 80
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=1200",
+        "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200",
+        "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa con vista a la montaña para escapadas",
+        "description": "Pileta, parrilla y galería frente a la cordillera. A minutos de bodegas de Luján de Cuyo.\n\nPrecio por noche para hasta seis personas.",
+        "type": "HOUSE",
+        "operation": "TEMPORARY_RENT",
+        "price": 240000,
+        "currency": "ARS",
+        "address": "Viamonte 5200",
+        "city": "Chacras de Coria",
+        "province": "Mendoza",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "coveredArea": 160,
+        "totalArea": 900
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?w=1200",
+        "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=1200",
+        "https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Piso alto con vista al río en Rosario",
+        "description": "Departamento en torre frente al Paraná, living con ventanal y balcón aterrazado.\n\nCochera y baulera incluidas.",
+        "type": "APARTMENT",
+        "operation": "SALE",
+        "price": 230000,
+        "currency": "USD",
+        "address": "Av. de la Costa Estanislao López 2600",
+        "city": "Rosario",
+        "province": "Santa Fe",
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "coveredArea": 110,
+        "totalArea": 118
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1460317442991-0ec209397118?w=1200",
+        "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200",
+        "https://images.unsplash.com/photo-1560185893-a55cbc8c57e8?w=1200"
+      ]
+    },
+    {
+      "owner": 2,
+      "status": "PUBLISHED",
+      "request": {
+        "title": "Casa de montaña entre árboles en Bariloche",
+        "description": "Casa de madera y piedra con hogar a leña, rodeada de bosque y a 500 metros del lago Nahuel Huapi.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 175000,
+        "currency": "USD",
+        "address": "Av. Bustillo km 8",
+        "city": "Bariloche",
+        "province": "Río Negro",
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "coveredArea": 90,
+        "totalArea": 700
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1449844908441-8829872d2607?w=1200",
+        "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=1200",
+        "https://images.unsplash.com/photo-1632829882891-5047ccc421bc?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "PAUSED",
+      "request": {
+        "title": "Monoambiente luminoso en Núñez",
+        "description": "Monoambiente con kitchenette y balcón. Ideal para una persona.\n\nA tres cuadras de la estación Núñez.",
+        "type": "APARTMENT",
+        "operation": "RENT",
+        "price": 450000,
+        "currency": "ARS",
+        "address": "Av. del Libertador 7600",
+        "city": "Núñez",
+        "province": "CABA",
+        "bedrooms": 0,
+        "bathrooms": 1,
+        "coveredArea": 35,
+        "totalArea": 38
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200",
+        "https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=1200"
+      ]
+    },
+    {
+      "owner": 1,
+      "status": "DRAFT",
+      "request": {
+        "title": "Casa de ladrillo con quincho en City Bell",
+        "description": "Casa en lote arbolado con quincho, pileta y huerta. Cuatro dormitorios, uno en planta baja.",
+        "type": "HOUSE",
+        "operation": "SALE",
+        "price": 380000,
+        "currency": "USD",
+        "address": "Calle 14 entre 471 y 472",
+        "city": "City Bell",
+        "province": "Buenos Aires",
+        "bedrooms": 4,
+        "bathrooms": 3,
+        "coveredArea": 240,
+        "totalArea": 700
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1430285561322-7808604715df?w=1200",
+        "https://images.unsplash.com/photo-1628744448840-55bdb2497bd4?w=1200",
+        "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=1200"
+      ]
+    }
+  ]
+}
