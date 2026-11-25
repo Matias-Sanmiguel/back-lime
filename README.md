@@ -38,6 +38,26 @@ export JAVA_HOME=/usr/lib/jvm/java-21-openjdk   # ajustar al path local
 ./mvnw spring-boot:run
 ```
 
+## Configuración (variables de entorno)
+
+| Variable | Para qué sirve | Si no se define |
+|----------|----------------|-----------------|
+| `JWT_SECRET` | Clave con la que se firman y verifican los JWT | Usa un valor de desarrollo que es público (está en este repo) |
+| `MSSQL_SA_PASSWORD` | Contraseña de SQL Server (`sa`) | Valor de desarrollo |
+| `UPLOAD_DIR` | Carpeta donde se guardan las fotos subidas | `./uploads` (`/tmp/lime-uploads` con Docker Compose) |
+
+### `JWT_SECRET` en producción
+
+**En producción `JWT_SECRET` se define siempre por variable de entorno; nunca se deja el valor por defecto ni se escribe en el repo.** El valor por defecto de `application.properties` y `compose.yaml` es solo para desarrollo y es público: quien lo conozca puede firmar tokens válidos y hacerse pasar por cualquier usuario.
+
+- Debe tener al menos 32 caracteres (256 bits). Se usa tal cual, como texto (no como Base64); con menos largo la app no arranca.
+- Para generar uno: `openssl rand -base64 48`
+- Cómo definirlo:
+  - Docker Compose: `export JWT_SECRET='...'` antes de `docker compose up`, o un archivo `.env` junto a `compose.yaml` con `JWT_SECRET=...` (`.env` ya está en `.gitignore`).
+  - Local con Maven: `export JWT_SECRET='...'` y después `./mvnw spring-boot:run`.
+  - Hosting: cargarlo en el panel de variables de entorno del servicio.
+- Si se cambia, los tokens ya emitidos dejan de valer y los usuarios tienen que volver a iniciar sesión.
+
 ## API (resumen)
 
 ```text
