@@ -225,7 +225,7 @@ Requiere title, price, currency, city, type, operation. **200** `PUBLISHED` · *
 
 ### `POST /api/v1/properties/{id}/images` · JWT dueño · multipart `file`
 
-MIME: jpeg / png / webp. **201** `ImageResponse` · **400** MIME · **401**/**403**
+MIME: jpeg / png / webp (se verifica también el contenido, no solo el header) · máx. 5 MB. **201** `ImageResponse` · **400** vacío, tipo no permitido, contenido que no coincide o más de 5 MB · **401** sin token · **403** aviso ajeno · **404** aviso inexistente
 
 ### `PATCH /api/v1/properties/{id}/images/{imageId}` · JWT dueño · multipart `file` → **200**
 
