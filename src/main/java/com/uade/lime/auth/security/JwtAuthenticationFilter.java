@@ -16,6 +16,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -27,15 +28,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.denylistedTokenRepository = denylistedTokenRepository;
     }
 
-    @Override
+        @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (header != null && header.startsWith("Bearer ")) {
+        String token = resolveToken(request);
+        if (token != null) {
             try {
-                Claims claims = jwtService.parse(header.substring(7));
+                Claims claims = jwtService.parse(token);
                 if (!denylistedTokenRepository.existsByJti(claims.getId())) {
                     SecurityContextHolder.getContext().setAuthentication(toAuthentication(claims));
                 }
@@ -46,6 +47,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private String resolveToken(HttpServletRequest request) {
+        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (AuthCookieService.COOKIE_NAME.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
     private UsernamePasswordAuthenticationToken toAuthentication(Claims claims) {
         UserPrincipal principal = new UserPrincipal(
                 Long.valueOf(claims.getSubject()),
